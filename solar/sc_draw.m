@@ -15,3 +15,22 @@ end
 if nargout > 1
     ax_out = ax;
 end
+if isfield(SC,'solar') && SC.solar.ele > 0
+    % I use negative azimuth here because sph2cart uses angles running
+    % counter clockwise, but we'd like them going clockwise. N is along
+    % the X axis
+    [sx,sy,sz] = sph2cart(degtorad(-SC.solar.azi), degtorad(SC.solar.ele), 4);
+    plot3(ax,[0,sx],[0,sy],[0,sz],'r');
+end
+if isfield(SC,'xlim')
+    set(ax,'xlim',SC.xlim);
+end
+if isfield(SC,'ylim')
+    set(ax,'ylim',SC.ylim);
+end
+if isfield(SC,'zlim')
+    set(ax,'zlim',SC.zlim);
+end
+if isfield(SC,'view')
+    view(ax, SC.view(1), SC.view(2));
+end

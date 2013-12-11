@@ -1,5 +1,5 @@
 function stats = sc_rotation(SC, lat, lon, yr, mon, day)
-% [tm,azis,WM,dt,WHr_by_tile] = sc_rotation(SC, lat, lon, yr, mon, day);
+% stats = sc_rotation(SC [, lat, lon, yr, mon, day]);
 
 d_azi = 5;
 %%

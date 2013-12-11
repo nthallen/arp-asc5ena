@@ -1,6 +1,7 @@
 function sc_day_avi(SC, SCazi, lat, lon, yr, mon, day)
-% sc_day_avi(SC, SCazi, lat, lon, yr, mon, day);
+% sc_day_avi(SC [, SCazi, lat, lon, yr, mon, day]);
 % SC: Stratocruiser model from StratoCruiser
+% SCazi: Stratocruiser azimuth
 % lat: latitude
 % lon: E longitude
 % yr: year
@@ -16,7 +17,7 @@ if nargin < 2
     mon = 6; day = 21; yr = 2014;
 end
 %%
-dt = 10/60; % hours
+dt = 5/60; % hours
 solar_cell_efficiency = 0.20;
 time_offset = -lon*24/360;
 tm = (0:dt:24)'*3600 + time_offset*3600;
@@ -58,7 +59,11 @@ for j=1:length(daylight)
     set(h,'horizontalAlignment','center');
     frame = getframe(f);
     writeVideo(writerObj, frame);
-    fprintf(1, 'Wrote frame %d of %d\n', j, length(daylight));
+    xl = get(ax,'xlim');
+    yl = get(ax,'ylim');
+    zl = get(ax,'zlim');
+    fprintf(1, 'Wrote frame %d of %d xl = [%.1f,%.1f] yl = [%.1f,%.1f] zl = [%.1f,%.1f]\n', ...
+        j, length(daylight), xl, yl, zl);
     if ~isempty(oldfig)
         delete(oldfig);
     end

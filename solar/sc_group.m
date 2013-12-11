@@ -1,5 +1,7 @@
 function sc_group(SC)
 % sc_group(SC);
+% summary graph for flat panels (insensitive to rotation) so displaying
+% only minimum power values over latitudes and dates
 %%
 LL = [ 34.4, -104
        40,   -104
