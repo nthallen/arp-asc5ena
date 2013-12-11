@@ -1,0 +1,280 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+ <title>ASC5ENA Trajectory Simulator</title>
+ <script src="raphael.js"></script>
+ <script src="jquery-1.7.1.min.js"></script>
+ <style type="text/css">
+    #canvas {
+      float: left;
+      margin: 15px;
+    }
+  </style>
+  <script src="USMap.js" type="application/javascript"></script>
+  <script src="sample_winds.js" type="application/javascript"></script>
+  
+  <script>
+      $(document).ready(function(){
+        var xdim = 600;
+        var ydim = 420;
+        var minWindFieldSpacing = 20; // pixels
+        var normalWindSpeed = 10; // m/s to match latitude grid spacing
+        var paper = Raphael("canvas", xdim, ydim);
+        paper.clear();
+        var background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
+        var rubber, rubberx, rubbery, rubberdx, rubberdy;
+        
+        var minLat = 360;
+        var maxLat = -360;
+        var minLon = 360;
+        var maxLon = -360;
+        var nBorders = Map.length; // Map.length
+        var XScale, YScale; // pixels per degree
+        
+        function init_scale_from_map() {
+          var i;
+          $("#Status").text("Determining Map Extents");
+          for (i = 0; i < nBorders; ++i) { // Map.length
+            var mLon = Map[i].BoundingBox[0];
+            var MLon = Map[i].BoundingBox[1];
+            var mLat = Map[i].BoundingBox[2];
+            var MLat = Map[i].BoundingBox[3];
+            if (mLat < minLat) minLat = mLat;
+            if (MLat > maxLat) maxLat = MLat;
+            if (mLon < minLon) minLon = mLon;
+            if (MLon > maxLon) maxLon = MLon;
+          }
+          init_scale();
+        }
+        
+        function init_scale() {
+          // alert("minLon: " + minLon + " maxLon: " + maxLon);
+          var dLat = (maxLat - minLat);
+          var dLon = (maxLon - minLon);
+          var meanLat = (minLat+maxLat)/2;
+          var meanLon = (minLon+maxLon)/2;
+          var cosLat = Math.cos(meanLat * Math.PI / 180.);
+          if (dLon * cosLat / xdim > dLat / ydim ) {
+            dLat = ydim * dLon * cosLat / xdim;
+            minLat = meanLat - dLat/2;
+            maxLat = meanLat + dLat/2;
+          } else {
+            dLon = xdim * dLat / (ydim * cosLat);
+            minLon = meanLon - dLon/2;
+            maxLon = meanLon + dLon/2;
+          }
+          $("#minLat").val(minLat.toFixed(4));
+          $("#maxLat").val(maxLat.toFixed(4));
+          $("#minLon").val(minLon.toFixed(4));
+          $("#maxLon").val(maxLon.toFixed(4));
+          XScale = xdim/(maxLon - minLon);
+          YScale = ydim/(maxLat - minLat);
+          // alert("minLat: " + minLat + " maxLat: " + maxLat + " minLon: " + minLon + " maxLon: " + maxLon);
+        }
+        
+        function update_scale() {
+          var mLon = parseFloat($("#minLon").val());
+          var MLon = parseFloat($("#maxLon").val());
+          var mLat = parseFloat($("#minLat").val());
+          var MLat = parseFloat($("#maxLat").val());
+          // alert("mLon: " + mLon + " MLon: " + MLon);
+          if (mLon >= MLon) {
+            alert("min Lon must be less than max Lon: (" + mLon + " >= " + MLon + ")");
+          } else if (mLat >= MLat) {
+            alert("min Lat must be less than max Lat");
+          } else {
+            minLat = mLat;
+            maxLat = MLat;
+            minLon = mLon;
+            maxLon = MLon;
+          }
+          init_scale();
+        }
+        
+        var clr = "#fff";
+        //alert("XScale: " + XScale + " YScale: " + YScale + "\nminLon: " + minLon + " minLat: " + minLat);
+
+        function map_scale(x, y) {
+          x = Math.round((x-minLon) * XScale);
+          y = Math.round((maxLat - y) * YScale);
+          return x + "," + y;
+        }
+        
+        function draw_map_body() {
+          var i, j;
+          paper.clear();
+          background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
+          for (i = 0; i < nBorders; ++i) {
+            // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
+            var BB = Map[i].BoundingBox;
+            if (BB[0] <= maxLon && BB[1] >= minLon && BB[2] <= maxLat && BB[3] >= minLat) {
+              var ps = 'M' + map_scale(Map[i].X[1], Map[i].Y[1]);
+              for (j = 1; j < Map[i].X.length; ++j) {
+                ps = ps + "L" + map_scale(Map[i].X[j], Map[i].Y[j]);
+              }
+              // alert(ps);
+              paper.path(ps).attr({ fill: "none", stroke: clr,
+                "stroke-width": 2}).show;
+            }
+          }
+          background.drag( function(dx,dy,x,y,event) { // move handler
+            x -= $("#canvas").offset().left;
+            y -= $("#canvas").offset().top;
+            $("#mvdx").text(dx.toFixed(0));
+            $("#mvdy").text(dy.toFixed(0));
+            $("#mvx").text(x.toFixed(0));
+            $("#mvy").text(y.toFixed(0));
+            var rx = rubberx;
+            var ry = rubbery;
+            rubberdx = dx;
+            rubberdy = dy;
+            if (dx < 0) {
+              rx = rubberx + dx;
+              dx = -dx;
+            }
+            if (dy < 0) {
+              ry = rubbery + dy;
+              dy = -dy;
+            }
+            rubber.attr( { x: rx, y: ry, width: dx, height: dy}).show;
+          },
+          function(x,y,event) { // start handler
+            rubberx = x - $("#canvas").offset().left;
+            rubbery = y - $("#canvas").offset().top;
+            rubberdx = 0;
+            rubberdy = 0;
+            rubber = paper.rect(rubberx, rubbery, 1, 1, 0).attr({fill: "none", stroke : "#000" });
+            rubber.show;
+            $("#stx").text(x.toFixed(0));
+            $("#sty").text(y.toFixed(0));
+          },
+          function(event) { // end handler
+            rubber.remove();
+            delete(rubber);
+            if (rubberdx != 0 && rubberdy != 0) {
+              if (rubberdx < 0) {
+                rubberx += rubberdx;
+                rubberdx = -rubberdx;
+              }
+              if (rubberdy < 0) {
+                rubbery += rubberdy;
+                rubberdy = -rubberdy;
+              }
+              var mLon = minLon + rubberx/XScale;
+              maxLon = minLon + (rubberx+rubberdx)/XScale;
+              minLon = mLon;
+              var MLat = maxLat - rubbery/YScale;
+              minLat = maxLat - (rubbery+rubberdy)/YScale;
+              maxLat = MLat;
+              init_scale();
+              draw_map();
+            }
+          });
+          $("#Status").text("Drawing Winds");
+          setTimeout(function (){ draw_wind_field(); }, 100);
+        }
+         
+        function draw_map() {
+          $("#Status").text("Drawing Map");
+          // Request a small delay to allow browser to render the status first:
+          setTimeout(function (){ draw_map_body(); }, 100);
+        }
+        
+        function draw_wind_field() {
+          // alert("draw_wind_field()");
+          var LatStep = 1;
+          var LonStep = 1;
+          var dLat = windData.lats[1] - windData.lats[0];
+          if (dLat < 0) dLat = -dLat;
+          var Ypixels = dLat * YScale;
+          if (Ypixels < minWindFieldSpacing) {
+            LatStep = Math.ceil(minWindFieldSpacing/Ypixels);
+          }
+          var LatGrid = dLat*LatStep;
+          
+          var dLon = windData.lons[1] - windData.lons[0];
+          if (dLon < 0) dLon = -dLon;
+          var Xpixels = dLon * XScale;
+          if (Xpixels < minWindFieldSpacing) {
+            LonStep = Math.ceil(minWindFieldSpacing/Xpixels);
+          }
+          var LonGrid = dLon*LonStep;
+          
+          // We will scale winds so normalWindSpeed matches one latitude grid
+          var NwindScale = dLat*LatStep/normalWindSpeed; // deg Lat per m/s
+          var EwindScale = NwindScale * YScale / XScale; // deg Lon per m/s
+          var i, j;
+          for (i = 0; i < windData.nlats; i += LatStep) {
+            var lat = windData.lats[i];
+            // alert("lat: " + lat.toFixed(2) + " minLat: " + minLat.toFixed(2) +
+            //  " maxLat: " + maxLat.toFixed(2));
+            if (lat + LatGrid >= minLat && lat - LatGrid <= maxLat) {
+              for (j = 0; j < windData.nlons; j += LonStep) {
+                var lon = windData.lons[j];
+                if (lon > maxLon) lon -= 360;
+                // alert("lon: " + lon.toFixed(2) + " minLon: " + minLon.toFixed(2) +
+                //  " maxLon: " + maxLon.toFixed(2));
+                if (lon + LonGrid >= minLon && lon - LonGrid <= maxLon) {
+                  var lon1 = lon + windData.field[i*windData.nlons*2] * EwindScale;
+                  var lat1 = lat + windData.field[i*windData.nlons*2+1] * NwindScale;
+                  var ps = 'M' + map_scale(lon, lat) + "L" + map_scale(lon1, lat1);
+                  paper.path(ps).attr({ fill: "none", stroke: "#F00",
+                    "stroke-width": 1, "arrow-end": "classic-wide-long"}).show;
+                  // alert(ps);
+                }
+              }
+            }
+          }
+          $("#Status").text("Ready");
+        }
+       
+        init_scale_from_map();
+        draw_map();
+        $( "#redraw" ).click(function() {
+          update_scale();
+          draw_map();
+          return false;
+        });
+        $( "#zoomfull").click(function() {
+          init_scale_from_map();
+          draw_map();
+          return false;
+        });
+//      $( "#canvas" ).on( "click", function( event ) {
+//        var $this = $( this );
+//        //console.log( "event object:" );
+//        //console.dir( event );
+//        //console.log( "canvas:" );
+//        //console.dir( $this.offset() );
+//        var Xoff = event.pageX - $this.offset().left;
+//        var Yoff = event.pageY - $this.offset().top;
+//        $("#Xval").text(Xoff.toFixed(0));
+//        $("#Yval").text(Yoff.toFixed(0));
+//        });
+      })
+</script>
+</head>
+<body>
+<h1>ASC5ENA Trajectory Simulator</h1>
+<div id="canvas"></div>
+<form>
+<table>
+<tr><th></th><th>min</th><th>max</th></tr>
+<tr><th>Lat:</th><td><input name="minLat" id="minLat"></td><td><input name="maxLat" id="maxLat"></td></tr>
+<tr><th>Lon:</th><td><input name="minLon" id="minLon"></td><td><input name="maxLon" id="maxLon"></td></tr>
+</table>
+<input type="submit" id="redraw" value="Redraw">
+<input type="submit" id="zoomfull" value="Zoom Full">
+</form>
+<p>X: <span id="Xval"></span><br>
+   Y: <span id="Yval"></span></p>
+
+<table>
+<tr><th></th><th>dx</th><th>dy</th><th>x</th><th>y</th></tr>
+<tr><th>move:</th><td id="mvdx"></td><td id="mvdy"></td><td id="mvx"></td><td id="mvy"</td></tr>
+<tr><th>start:</th><td id="stdx"></td><td id="stdy"></td><td id="stx"></td><td id="sty"</td></tr>
+</table>
+<p><b>Status:</b> <span id="Status"></span></p>
+</body>
+</html>
