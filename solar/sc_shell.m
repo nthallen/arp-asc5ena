@@ -1,4 +1,7 @@
 function SC = sc_shell(SC)
+% SC = sc_shell(SC);
+% Create an ellipsoidal shell inside an ellipsoidal tile array to improve
+% realism of animation.
 a = SC.a - SC.tile_edge/8;
 b = SC.b - SC.tile_edge/8;
 c = SC.c - SC.tile_edge/8;

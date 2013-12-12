@@ -26,7 +26,7 @@ WHr_by_tile = WHr_by_tile / length(azis);
 %%
 f1 = figure;
 mesh(azis,tm/3600,WM)
-title(sprintf('All rotations: %d/%d/%d %.1fN %.1fE', mon, day, yr, lat, lon));
+title(sprintf('All rotations: %s, %d/%d/%d %.1fN %.1fE', SC.name, mon, day, yr, lat, lon));
 xlim([0 360]);shg
 xlabel('Azimuth');
 ylabel('Hour UTC');

@@ -24,7 +24,11 @@ if nargin < 2
 end
 %%
 dt = 10/60; % hours
-solar_cell_efficiency = 0.20;
+if isfield(SC,'solar_cell_efficiency')
+    solar_cell_efficiency = SC.solar_cell_efficiency;
+else
+    solar_cell_efficiency = 0.20;
+end
 time_offset = -lon*24/360;
 tm = (0:dt:24)'*3600 + time_offset*3600;
 [hr, mn, sc] = time2hms(tm);
