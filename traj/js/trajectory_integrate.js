@@ -90,7 +90,7 @@ function Trajectory_Integrate( cur_state, model ) {
 
   //  Set the integration time step. 
 
-  var dt = 1.0d0 / ( 24 * 60 ); // 1 minute
+  var dt = 1.0 / ( 24 * 60 ); // 1 minute
   if (arguments.length < 5) {
     step = 0.5; // 12 hours
   }
