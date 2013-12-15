@@ -2,6 +2,7 @@
 
 # use lib "/home/leroy/perl"; 
 
+use CGI;
 use NetCDF; 
 use ARMTime; 
 use ModelDefs qw( %models );
@@ -9,9 +10,11 @@ use ModelDefs qw( %models );
 
 #  User inputs. 
 
-my $model = shift @ARGV; 
-my $level = shift @ARGV; 
-my $armtime = shift @ARGV; 
+my $cgi = new CGI;
+
+my $model = $cgi->param('model');
+my $level = $cgi->param('level');
+my $armtime = $cgi->param('armtime');
 
 #  Initiate.  
 
@@ -197,5 +200,5 @@ my $message = "{\n" . join( ",\n", @vars ) . "\n}\n";
 
 #  Print output message. 
 
-print $message; 
+print $cgi->header('application/json'), $message; 
 

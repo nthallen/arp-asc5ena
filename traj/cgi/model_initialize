@@ -1,5 +1,6 @@
 #!/usr/bin/perl 
 
+use CGI;
 use NetCDF; 
 use List::Util qw( min max ); 
 use ModelDefs qw( %models );
@@ -113,6 +114,9 @@ foreach $m ( keys %models ) { push @names, sprintf( "%5.3f", $models{$m}{time_st
 push @vars, "\"timesteps\": [\n" . join( ",\n", @names ) . "\n]"; 
 
 #  Done.
+my $cgi = new CGI;
+
+print $cgi->header('application/json');
 
 print "{\n" . join( ",\n", @vars ) . "\n}\n"; 
 
