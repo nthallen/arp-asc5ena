@@ -14,12 +14,15 @@ function model_winds_received(data) {
 }
 
 function request_model_winds(armtime) {
-  //var jqxhr = $.ajax( "model_wind_field", { dataType: "json" } );
-  // alert("Requesting wind for " + cur_model.model_name + " " + cur_model.pressure +
-    // " " + armtime);
-  var filename = "winds_" + armtime.toFixed(2) + ".json";
-  console.log("Retrieving: " + filename);
-  var jqxhr = $.ajax( filename, { dataType: "json" } )
+  var opts = {
+    model: cur_model.model_name,
+    level: cur_model.pressure,
+    armtime: armtime
+  };
+  //var filename = "winds_" + armtime.toFixed(2) + ".json";
+  //console.log("Retrieving: " + filename);
+  var jqxhr = $.ajax( "/cgi-bin/model_wind_field",
+      { dataType: "json", data: opts } )
     .done(function(data) { model_winds_received(data); })
     .fail(function() { alert( "error retrieving " + filename ); });
 }

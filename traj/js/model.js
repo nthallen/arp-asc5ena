@@ -1,5 +1,5 @@
 function model_init() {
-  var jqxhr = $.ajax( "model_initialize.json", { dataType: "json" } )
+  var jqxhr = $.ajax( "/cgi-bin/model_initialize", { dataType: "json" } )
     .done(function(data, textstatus, jqXHR) {
       model_loaded(data);
     })
