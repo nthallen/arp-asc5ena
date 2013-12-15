@@ -35,6 +35,7 @@ function model_list_range() {
   var minTms = (minT - arm_epoch)*24*3600*1e3;
   var minTD = new Date(minTms);
   var maxTD = new Date((maxT - arm_epoch)*24*3600*1e3);
+  // console.log("Model start: " + minTD.toUTCString());
   var months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
@@ -61,31 +62,36 @@ function model_list_range() {
 }
 
 function update_table() {
-// <tr><th>Position:</th><td id="run_position"></td></tr>
-// <tr><th>Drive Thrust:</th><td id="run_thrust"></td></tr>
-// <tr><th>Drive Orientation:</th><td id="run_azimuth"></td></tr>
-// <tr><th>Step Size:</th><td><input type="text" id="run_step" name="run_step" size="2" value="3"> hours</td></tr>
-// </table>
   $("#run_position").html(cur_state.latitude.toFixed(2) + "N  " + cur_state.longitude.toFixed(2) + "E");
-  $("#run_thrust").html(cur_state.thrust.toFixed(1) + " m/s");
-  $("#run_azimuth").html(cur_state.orientation.toFixed(0) + "<sup>o</sup>");
+  // $("#run_thrust").html(cur_state.thrust.toFixed(1) + " m/s");
+  // $("#run_azimuth").html(cur_state.orientation.toFixed(0) + "<sup>o</sup>");
+  $("#run_date").html( new Date((cur_state.cur_armtime - arm_epoch)*24*3600*1e3).toUTCString());
 }
 
 function flight_init() {
   var mn = $("#models").val();
   var mdl = models.names[mn];
-  var start_mon = $("#start_mon").val() + 1;
+  var start_mon = $("#start_mon").val();
   var start_day = $("#start_day").val();
   var start_year = $("#start_yr").val();
-  var stDate = new Date(start_year, start_mon, start_day, 0, 0, 0, 0);
+  var stDate = new Date(start_year, start_mon-1, start_day, 0, 0, 0, 0);
+  stDate.setUTCFullYear(start_year);
+  stDate.setUTCMonth(start_mon-1);
+  stDate.setUTCDate(start_day);
+  stDate.setUTCHours(0);
+  stDate.setUTCMinutes(0);
+  stDate.setUTCSeconds(0);
+  stDate.setUTCMilliseconds(0);
+  // console.log("Requested Start Field: " + start_mon + "/" + start_day + "/" + start_year);
+  // console.log("Requested Start Date: " + stDate.toUTCString());
   var armtime = arm_epoch + stDate.getTime()/(1e3*3600*24);
+  // console.log("Requested Start armtime: " + armtime);
   if (armtime < models.timeranges[mn*2] || armtime > models.timeranges[mn*2+1]) {
     alert('Start time is outside available model range');
     return 0;
   }
   var fl = $("#flight_level").val();
   fl = parseFloat(fl);
-  console.log("fl is " + fl);
   if (fl < models.pressureranges[mn*2] || fl > models.pressureranges[mn*2+1]) {
     alert('Pressure level outside available model range');
     return 0;
@@ -95,10 +101,11 @@ function flight_init() {
   cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
   $("#run_model").html(models.fullnames[mn]);
   $("#run_pressure").html(fl.toFixed(0) + " hPa");
-  $("#run_model").click(flight_step);
+  $("#run_model_step").click(function () { flight_step(); });
   update_table();
   $("#model_init").hide();
   $("#model_run").show();
+  run_disable();
   cur_model = {
     trajectory: [new trajectory_rec(cur_state)],
     armtimes: [], winds: [],
@@ -109,7 +116,53 @@ function flight_init() {
   sequence_init([
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
-      { Status: "Retrieving wind fields ...", Function: load_model_winds },
-      { Status: "Drawing wind field ...", Function: draw_wind_field }
+      { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
+      { Status: "Drawing wind field ...", Function: draw_wind_field },
+      { Status: "Drawing current position ...", Function: draw_current_position },
+      { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+      { Status: "Enable Step", Function: run_enable }
     ]);
+}
+
+function run_enable() {
+  $("#run_model_step").prop('disabled', false);
+  cur_state.busy = 0;
+}
+
+function run_disable() {
+  $("#run_model_step").prop('disabled', true);
+  cur_state.busy = 1;
+}
+
+function flight_step() {
+  run_disable();
+  var run_step = parseInt($("#run_step").val());
+  // console.log("run_step is " + run_step);
+  cur_state.end_armtime = cur_state.cur_armtime + run_step/24;
+  flight_step2();
+}
+
+function flight_step2() {
+  // console.log("flight_step2()");
+  if (cur_state.error) {
+    set_status("Error");
+  } else if (cur_state.cur_armtime < cur_state.end_armtime) {
+    // console.log("flight_step2: sequence 1");
+    sequence_init([
+        { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
+        { Status: "Calculating trajectory ...", Function: Trajectory_Integrate },
+        { Status: "Checking for completion ...", Function: flight_step2, Async: 1 }
+      ]);
+  } else {
+    // console.log("flight_step2: sequence 2");
+    sequence_init([
+      { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
+      { Status: "Drawing wind field ...", Function: draw_wind_field },
+      { Status: "Drawing trajectory ...", Function: draw_trajectory },
+      { Status: "Draw current position ...", Function: draw_current_position },
+      { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+      { Status: "Update table ...", Function: update_table },
+      { Status: "Enable Step", Function: run_enable }
+    ]);
+  }
 }

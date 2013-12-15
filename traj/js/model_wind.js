@@ -1,72 +1,78 @@
-// Loading of wind fields needs to be orchestrated with the
-// integration, since it is an asynchronous process.
-function Model_Retrieve_Wind_Field(model, index, armtime) {
-  model.armtimes[index] = armtime;
-  //model.winds[index] = loaded data...
-}
-
-function Model_Load_Wind_Fields(armtimes_requested, model) {
-  if (model.armtimes[0] != armtime_requested[0]) {
-    if (model.armtimes[1] == armtime_requested[0]) {
-      model.armtimes[0] = armtime_requested[0];
-      model.winds[0] = model.winds[1];
-    } else {
-      Model_Retrieve_Wind_Field(model, 0, armtime_requested[0]);
-    }
-  }
-  if (model.armtimes[1] != armtime_requested[1]) {
-    Model_Retrieve_Wind_Field(model, 1, armtime_requested[1]);
-  }
-}
-
-// function model_init() {
-  // var jqxhr = $.ajax( "model_initialize.json", { dataType: "json" } )
-    // .done(function(data, textstatus, jqXHR) {
-      // model_loaded(data);
-    // })
-    // .fail(function() {
-      // alert( "error" );
-    // });
-// }
 
 function model_winds_received(data) {
   if (data.status) {
     if (data.status.match(/^success/i)) {
-      Investigate pattern matching in ajax.html
+      cur_model.armtimes.push(data.armtime);
+      cur_model.winds.push(data);
+      load_model_winds();
+    } else {
+      alert("Wind request failed: " + data.status);
     }
   } else {
-    alert("wind request failed");
+    alert("Wind request failed: No status");
   }
 }
 
-function request_model_winds(mname, pressure, armtime) {
+function request_model_winds(armtime) {
   //var jqxhr = $.ajax( "model_wind_field", { dataType: "json" } );
-  var jqxhr = $.ajax( "winds1.json", { dataType: "json" } )
+  // alert("Requesting wind for " + cur_model.model_name + " " + cur_model.pressure +
+    // " " + armtime);
+  var filename = "winds_" + armtime.toFixed(2) + ".json";
+  console.log("Retrieving: " + filename);
+  var jqxhr = $.ajax( filename, { dataType: "json" } )
     .done(function(data) { model_winds_received(data); })
-    .fail(function() { alert( "error retrieving winds" ); });
+    .fail(function() { alert( "error retrieving " + filename ); });
 }
 
 function load_model_winds() {
   // Use cur_state and cur_model
-  var armtime = cur_state.armtime;
+  var armtime = cur_state.cur_armtime;
+  // var mess = "load_model_winds(" + armtime.toFixed(3) + ") with ";
+  // var i;
+  // for (i = 0; i < cur_model.armtimes.length; ++i) {
+    // if (i == 0) {
+      // mess = mess + "[";
+    // } else {
+      // mess = mess + ", ";
+    // }
+    // mess = mess + cur_model.armtimes[i].toFixed(2);
+  // }
+  // console.log(mess + "]");
   var armday = Math.floor(armtime);
   var armfrac = armtime - armday;
-  var armstep = floor(armfrac)/cur_model.model_timestep;
+  var armstep = Math.floor(armfrac/cur_model.model_timestep);
   var armreqtime0 = armday + armstep*cur_model.model_timestep;
-  var armreqtime1 = armreqtime0 + cur_model.model.timestep;
-  while (cur_model.armtimes.length > 0) {
-    if (armreqtime0 > cur_model.armtimes[0]) {
-      shift(cur_model.armtimes);
-      shift(cur_model.winds);
-    }
+  var armreqtime1 = armreqtime0 + cur_model.model_timestep;
+  var armreqtime2 = armreqtime0 + 2*cur_model.model_timestep;
+  while (cur_model.armtimes.length > 0 && armreqtime0 > cur_model.armtimes[0]) {
+    // console.log("Shifting out armtime " + cur_model.armtimes[0] + " req0: " + armreqtime0);
+    cur_model.armtimes.shift();
+    cur_model.winds.shift();
   }
-  // if (cur_model.armtimes.length == 0) { //no winds are loaded, determine 
-    // request cur_model.model_name, cur_model.pressure, armreqtime0;
-  // } else if (cur_model.armtimes.length == 1) {
-    // request cur_model.model_name, cur_model.pressure, armreqtime1;
-  // } else {
-    // done
-  // }
+  //console.log("armtimes now length " + cur_model.armtimes.length + " winds: " + cur_model.winds.length);
+  // Now I've shifted out the old times
+  switch (cur_model.armtimes.length) {
+    case 0:
+      request_model_winds(armreqtime0);
+      break;
+    case 1:
+      request_model_winds(armreqtime1);
+      break;
+    case 2:
+      // alert("wind fields loaded");
+      if (armtime + 10/(24*60) > armreqtime1) {
+        request_model_winds(armreqtime2);
+      } else {
+        sequence_exec();
+      }
+      break;
+    case 3:
+      sequence_exec();
+      break;
+    default:
+      alert("Unexpected length in load_model_winds()");
+      break;
+  }
 }
 
 function find_in_array(arr, val) {
@@ -104,15 +110,18 @@ function find_in_array(arr, val) {
   }
 }
 
+var trace_winds = 0;
 // Return non-zero on success
 function Model_Wind( pos, model ) {
   // Return object containing status and winds
   // Determine the time interval requested.
   // Assume (verify) that wind fields are loaded
-  
-  if (pos.cur_armtime < model.armtimes[0] || pos.cur_armtime > model.armtimes[1] ||
-      model.armtimes[0] >= model.armtimes[1]) {
-    alert('Wind fields not loaded in Model_Wind()');
+
+  var ntimes = model.armtimes.length;  
+  if (ntimes < 2 || pos.armtime < model.armtimes[0] ||
+      pos.armtime > model.armtimes[ntimes-1] ||
+      model.armtimes[0] >= model.armtimes[ntimes-1]) {
+    // alert('Wind fields not loaded in Model_Wind()');
     return { status: 0 };
   }
   //  Determine the requested longitude indices and interpolator.
@@ -126,16 +135,29 @@ function Model_Wind( pos, model ) {
     return { status: 0 };
   }
   var ilat = find_in_array(model.winds[0].lats, pos.latitude);
-  var itime = find_in_array(model.armtimes, pos.cur_armtime);
-  if (ilat.i < 0 || itime.i < 0) {
+  var itime = find_in_array(model.armtimes, pos.armtime);
+  if (ilat.i < 0 || itime.i < 0 || isNaN(itime.t)) {
     alert('Error interpolating latitude or time');
     return { status: 0 };
   }
 
   // Index in model.field[lat][lon][dir] is
   //  ilat.i*nlons*2 + ilon.i*2 + dir
+  // "arrayindexordering": "lat/lon/direction"
   var ilats = [ ilat.i*model.winds[0].nlons*2, (ilat.i+1)*model.winds[0].nlons*2 ];
-  var ilons = [ ilon.i*2, (ilat.i+1)*2 ];
+  var ilons = [ ilon.i*2, (ilon.i+1)*2 ];
+  if (trace_winds) {
+    console.log("[" + pos.longitude.toFixed(3) + "," +
+      ilon.i + "," + ilon.t.toFixed(2) + "]"
+    );
+    // console.log("Wind: ilats = [" + ilats[0] + "," + ilats[1] + "]\n" +
+      // "  ilons = [" + ilons[0] + "," + ilons[1] + "]\n" +
+      // "  ilat.t = " + ilat.t.toFixed(2) +
+      // "  ilon.t = " + ilon.t.toFixed(2) +
+      // "  itime.t = " + itime.t.toFixed(2)
+      // );
+  }
+  
   u = 0
     + model.winds[0].field[0+ilons[0]+ilats[0]] * (1-ilon.t) * (1-ilat.t) * (1-itime.t)
     + model.winds[0].field[0+ilons[1]+ilats[0]] * (ilon.t) * (1-ilat.t) * (1-itime.t)
