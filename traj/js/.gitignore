@@ -1,8 +1,5 @@
 USMap.js
 ajax.html
-jquery-1.7.1.min.js
-raphael.js
 sample_winds.js
-simple.json
-winds1.json
-
+*.json
+*.m
