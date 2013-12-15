@@ -1,0 +1,201 @@
+#!/usr/bin/perl 
+
+# use lib "/home/leroy/perl"; 
+
+use NetCDF; 
+use ARMTime; 
+use ModelDefs qw( %models );
+
+
+#  User inputs. 
+
+my $model = shift @ARGV; 
+my $level = shift @ARGV; 
+my $armtime = shift @ARGV; 
+
+#  Initiate.  
+
+my $status = "Success"; 
+my $nlons, $nlats, $ng; 
+my @lons, @lats; 
+my @u, @v; 
+
+while ( 1 ) {
+
+#  Check that it is a valid model. 
+
+  $valid = 0;
+  foreach $m ( keys %models ) {
+    $valid = ( $valid || $model eq $m ); 
+  };
+
+  my $m; 
+  if ( $valid ) {
+    $m = $models{$model}; 
+  } else {
+    $status = "Failed: Invalid model $model"; 
+    last; 
+  }; 
+
+#  Interpret the ARMTime, create filename, check for its existence. 
+
+  my ( $year, $month, $day, $hour ) = ARMTime::ConvertFrom( $armtime ); 
+  my $file = sprintf( "%s/%4.4d/%s.pressure_levels.%4.4d-%2.2d-%2.2d.nc", 
+	$m->{path}, $year, $model, $year, $month, $day ); 
+
+  if ( ! -e $file ) {
+    $status = "Failed: File $file could not be found"; 
+    last; 
+  };
+
+#  Open the file, get the pressure levels, check the requested pressure level. 
+
+  my $ncid, $dimid, $varid, $name, $ndims, $natts, $nlevels; 
+  my @levels; 
+  my $ilevel, $t; 
+
+  $ncid = NetCDF::open( $file, NetCDF::NOWRITE ); 
+  $dimid = NetCDF::dimid( $ncid, "levelist" ); 
+  NetCDF::diminq( $ncid, $dimid, $name, $nlevels ); 
+  $varid = NetCDF::varid( $ncid, "levelist" ); 
+  NetCDF::varget( $ncid, $varid, [0], [$nlevels], \@levels ); 
+
+  $valid = 0; 
+
+  for ( $ilevel=0; $ilevel<$nlevels; $ilevel++ ) {
+
+    if ( $level == $levels[$ilevel] ) {
+      $valid = 1; 
+      $t = 0.0; 
+      last; 
+    } elsif ( $ilevel < $nlevels-1 ) {
+      if ( ( $level - $levels[$ilevel] ) * ( $level - $levels[$ilevel+1] ) lt 0.0 ) {
+	$valid = 1; 
+	$t = log( $level / $levels[$ilevel] ) / log( $levels[$ilevel+1] / $levels[$ilevel] ); 
+	last; 
+      };
+    };
+
+  };
+
+  if ( ! $valid ) {
+    $status = "Failed: Could not find level $level"; 
+    NetCDF::close( $ncid ); 
+    last; 
+  };
+
+#  Check for desired armtime. 
+
+  my $ntimes; 
+  my @armtimes; 
+
+  $dimid = NetCDF::dimid( $ncid, "time" ); 
+  NetCDF::diminq( $ncid, $dimid, $name, $ntimes ); 
+
+  $varid = NetCDF::varid( $ncid, "time" ); 
+  NetCDF::varget( $ncid, $varid, [0], [$ntimes], \@times ); 
+  @armtimes = map { $_ / 24.0 + 693962.0 } @times; 
+
+  $valid = 0; 
+  for ( $itime=0; $itime<$ntimes; $itime++ ) {
+    if ( abs( $armtime - $armtimes[$itime] ) < 60.0/86400 ) {
+      $valid = 1; 
+      last; 
+    };
+  };
+
+  if ( ! $valid ) {
+    $status = "Failed: Could not find ARMTime $armtime in file"; 
+    last; 
+  };
+
+#  Get longitudes and latitudes. 
+
+  $dimid = NetCDF::dimid( $ncid, "longitude" ); 
+  NetCDF::diminq( $ncid, $dimid, $name, $nlons ); 
+  $varid = NetCDF::varid( $ncid, "longitude" ); 
+  NetCDF::varget( $ncid, $varid, [0], [$nlons], \@lons ); 
+
+  $dimid = NetCDF::dimid( $ncid, "latitude" ); 
+  NetCDF::diminq( $ncid, $dimid, $name, $nlats ); 
+  $varid = NetCDF::varid( $ncid, "latitude" ); 
+  NetCDF::varget( $ncid, $varid, [0], [$nlats], \@lats ); 
+
+#  Get wind fields. 
+
+
+  if ( $t == 0.0 ) {
+
+    $varid = NetCDF::varid( $ncid, "u" ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel,0,0], [1,1,$nlats,$nlons], \@u ); 
+
+    $varid = NetCDF::varid( $ncid, "v" ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel,0,0], [1,1,$nlats,$nlons], \@v ); 
+
+  } else {
+
+    my @u0, @u1, @v0, @v1; 
+    $ng = $nlons * $nlats; 
+
+    $varid = NetCDF::varid( $ncid, "u" ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel,0,0], [1,1,$nlats,$nlons], \@u0 ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel+1,0,0], [1,1,$nlats,$nlons], \@u1 ); 
+    @u = map { $u0[$_] * (1-$t) + $u1[$_] * $t } ( 0 .. ($ng-1) );
+
+    $varid = NetCDF::varid( $ncid, "v" ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel,0,0], [1,1,$nlats,$nlons], \@v0 ); 
+    NetCDF::varget( $ncid, $varid, [$itime,$ilevel+1,0,0], [1,1,$nlats,$nlons], \@v1 ); 
+    @v = map { $v0[$_] * (1-$t) + $v1[$_] * $t } ( 0 .. ($ng-1) );
+
+  }; 
+
+#  Done with extraction. 
+
+  NetCDF::close( $ncid ); 
+  last; 
+
+};
+
+
+#  Compose output message. 
+
+my @vars; 
+
+#  Status. 
+
+$t = localtime(); 
+push @vars, "\"timestamp\": \"$t\""; 
+push @vars, "\"status\": \"$status\""; 
+
+if ( $status =~ /^success/i ) {
+
+#  Dimensions. 
+
+  push @vars, "\"nlons\": " . sprintf( "%4d", $nlons ); 
+  push @vars, "\"nlats\": " . sprintf( "%4d", $nlats ); 
+
+#  Scalars. 
+
+  push @vars, "\"level\": " . sprintf( "%7.2f", $level ); 
+  push @vars, "\"leveltype\": \"pressure\""; 
+  push @vars, "\"levelunits\": \"hPa\""; 
+  push @vars, "\"armtime\": " . sprintf( "%10.3f", $armtime ); 
+  push @vars, "\"arrayindexordering\": \"lat/lon/direction\""; 
+
+#  Coordinates. 
+
+  push @vars, "\"lons\": [\n" . join( ",\n", map{ sprintf("%8.3f",$_) } @lons ) . "\n]"; 
+  push @vars, "\"lats\": [\n" . join( ",\n", map{ sprintf("%8.3f",$_) } @lats ) . "\n]"; 
+
+#  Wind field. 
+
+  push @vars, "\"field\": [\n" . join( ",\n", map{ sprintf("%9.4f, %9.4f",$u[$_],$v[$_]) } (0 .. ($ng-1)) ) . "\n]"; 
+
+}; 
+
+my $message = "{\n" . join( ",\n", @vars ) . "\n}\n"; 
+
+#  Print output message. 
+
+print $message; 
+

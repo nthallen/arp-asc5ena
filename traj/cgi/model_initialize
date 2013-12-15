@@ -1,0 +1,118 @@
+#!/usr/bin/perl 
+
+use NetCDF; 
+use List::Util qw( min max ); 
+use ModelDefs qw( %models );
+
+#  Variables. 
+
+my $nmodels = scalar keys %models; 
+my @vars = (); 
+my @names = (); 
+my $date; 
+my $m; 
+
+
+#  Get correct time ranges. 
+
+foreach $model ( keys %models ) {
+
+  $m = $models{$model}; 
+
+  opendir DIR, $m->{path}; 
+  @years = sort grep /\d\d\d\d/, readdir DIR; 
+  closedir DIR; 
+
+#  Get beginning of time range, time step and pressure levels. 
+
+  foreach $year ( @years ) {
+
+    opendir DIR, "$m->{path}/$year"; 
+    @files = sort grep /$model\.pressure_levels\..*\.nc$/, readdir DIR; 
+    closedir DIR; 
+    next if ( $#files < 0 ); 
+
+    my @ts, @levels; 
+
+    $ncid = NetCDF::open( "$m->{path}/$year/$files[0]", NetCDF::NOWRITE ); 
+
+    $varid = NetCDF::varid( $ncid, "time" ); 
+    NetCDF::varget( $ncid, $varid, [0], [2], \@ts ); 
+
+    $dimid = NetCDF::dimid( $ncid, "levelist" ); 
+    NetCDF::diminq( $ncid, $dimid, $name, $nlevels ); 
+    $varid = NetCDF::varid( $ncid, "levelist" ); 
+    NetCDF::varget( $ncid, $varid, [0], [$nlevels], \@levels ); 
+
+    NetCDF::close( $ncid ); 
+
+    $m->{time_range}[0] = $ts[0]/24.0 + 693962.0; 
+    $m->{time_step} = sprintf( "%5.3f", ( $ts[1] - $ts[0] ) / 24.0 ); 
+    $m->{pressure_range} = [ min(@levels), max(@levels) ]; 
+
+    last; 
+
+  }; 
+
+#  Get end of time range. 
+
+  foreach $year ( reverse @years ) {
+
+    opendir DIR, "$m->{path}/$year"; 
+    @files = reverse sort grep /$model\.pressure_levels\..*\.nc$/, readdir DIR; 
+    closedir DIR; 
+    next if ( $#files < 0 ); 
+
+    $ncid = NetCDF::open( "$m->{path}/$year/$files[$#files]", NetCDF::NOWRITE ); 
+    $dimid = NetCDF::dimid( $ncid, "time" ); 
+    NetCDF::diminq( $ncid, $dimid, $name, $ntimes ); 
+    $varid = NetCDF::varid( $ncid, "time" ); 
+    NetCDF::varget1( $ncid, $varid, [$ntimes-1], $t ); 
+    NetCDF::close( $ncid ); 
+
+    $m->{time_range}[1] = $t/24.0 + 693962.0; 
+    last; 
+
+  }; 
+
+};
+
+#  Get date. 
+
+chomp( $date = localtime() ); 
+push @vars, "\"timestamp\": \"" . $date . "\""; 
+
+#  Generate model names. 
+
+@names = (); 
+foreach $m ( keys %models ) { push @names, "\"$m\"" };
+push @vars, "\"names\": [\n" . join( ",\n", @names ) . "\n]"; 
+
+#  Generate model full names.
+
+@names = (); 
+foreach $m ( keys %models ) { push @names, "\"$models{$m}{full_name}\"" };
+push @vars, "\"fullnames\": [\n" . join( ",\n", @names ) . "\n]"; 
+
+#  Model pressure ranges. 
+
+@names = (); 
+foreach $m ( keys %models ) { push @names, sprintf( "%10.3f, %10.3f", @{ $models{$m}{pressure_range} } ) }; 
+push @vars, "\"pressureranges\": [\n" . join( ",\n", @names ) . "\n]"; 
+
+#  Model time ranges. 
+
+@names = (); 
+foreach $m ( keys %models ) { push @names, sprintf( "%10.3f, %10.3f", @{ $models{$m}{time_range} } ) }; 
+push @vars, "\"timeranges\": [\n" . join( ",\n", @names ) . "\n]"; 
+
+#  Model time steps. 
+
+@names = (); 
+foreach $m ( keys %models ) { push @names, sprintf( "%5.3f", $models{$m}{time_step} ) }; 
+push @vars, "\"timesteps\": [\n" . join( ",\n", @names ) . "\n]"; 
+
+#  Done.
+
+print "{\n" . join( ",\n", @vars ) . "\n}\n"; 
+
