@@ -109,6 +109,9 @@ function Trajectory_Integrate() {
     var dposa = new Array();
     var i;
 
+    if (cur_state.end_armtime-cur_state.cur_armtime < 1.25 * dt) {
+      dt = cur_state.end_armtime - cur_state.cur_armtime;
+    }
     //console.log("Int: " + cur_state.cur_armtime.toFixed(3) +
     //  " Lon: " + cur_state.longitude.toFixed(3));
     for (i=0; i < nrk; ++i) {
@@ -195,6 +198,9 @@ function Trajectory_Integrate() {
     }
   }
   // console.log("Int: cur_armtime: " + cur_state.cur_armtime.toFixed(3));
+  if (cur_state.end_armtime-cur_state.cur_armtime < 1.0/(3600*24)) {
+    cur_state.cur_armtime = cur_state.end_armtime;
+  }
 
   //  Done.
 

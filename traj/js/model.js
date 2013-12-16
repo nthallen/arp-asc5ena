@@ -28,6 +28,10 @@ function model_loaded(data) {
   sequence_exec(); // Allows model_init() to be used in a sequence
 }
 
+var months = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
+
 function model_list_range() {
   var mn = $("#models").val();
   var minT = models.timeranges[mn*2];
@@ -36,9 +40,6 @@ function model_list_range() {
   var minTD = new Date(minTms);
   var maxTD = new Date((maxT - arm_epoch)*24*3600*1e3);
   // console.log("Model start: " + minTD.toUTCString());
-  var months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
   // console.log("minT is " + minT);
   // console.log("minTms is " + minTms);
   // console.log("minTD is " + minTD);
@@ -61,11 +62,26 @@ function model_list_range() {
     models.pressureranges[mn*2+1].toFixed(0) + " hPa");
 }
 
+function format_hm(hour) {
+  var rv = "";
+  if (hour < 10) {
+    rv = "0";
+  }
+  rv = rv + hour.toFixed(0);
+  return rv;
+}
+
 function update_table() {
   $("#run_position").html(cur_state.latitude.toFixed(2) + "N  " + cur_state.longitude.toFixed(2) + "E");
-  // $("#run_thrust").html(cur_state.thrust.toFixed(1) + " m/s");
-  // $("#run_azimuth").html(cur_state.orientation.toFixed(0) + "<sup>o</sup>");
-  $("#run_date").html( new Date((cur_state.cur_armtime - arm_epoch)*24*3600*1e3).toUTCString());
+  var minutes = Math.round((cur_state.cur_armtime - arm_epoch)*24*60);
+  var date = new Date(minutes*60e3);
+  //$("#run_date").html( new Date((cur_state.cur_armtime - arm_epoch)*24*3600*1e3).toUTCString());
+  $("#run_date").html(
+    date.getUTCFullYear() + " " +
+    months[date.getUTCMonth()] + " " +
+    date.getUTCDate() + " " +
+    format_hm(date.getUTCHours()) + ":" +
+    format_hm(date.getUTCMinutes()));
 }
 
 function flight_init() {
