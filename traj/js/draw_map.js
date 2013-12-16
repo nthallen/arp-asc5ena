@@ -100,14 +100,18 @@ function map_scale(x, y) {
 }
 
 function draw_current_position() {
-  var x = Math.round((cur_state.longitude-minLon) * XScale);
-  var y = Math.round((maxLat - cur_state.latitude) * YScale);
+  var x, y;
   if (!ra_start) {
+    var start = cur_model.trajectory[0];
+    x = Math.round((start.longitude-minLon) * XScale);
+    y = Math.round((maxLat - start.latitude) * YScale);
     ra_start = paper.circle(x, y, pos_radius).attr({ fill: "#f00", stroke: "#0f0",
 	  "stroke-width": 1}).show();
   } else {
     ra_start.toFront();
   }
+  x = Math.round((cur_state.longitude-minLon) * XScale);
+  y = Math.round((maxLat - cur_state.latitude) * YScale);
   if (ra_pos) {
     ra_pos.attr({cx: x, cy: y}).toFront();
   } else {
@@ -119,8 +123,10 @@ function draw_current_position() {
 function draw_map() {
   var i, j;
   paper.clear();
-  ra_traj = undefined;
-  ra_pos = undefined;
+  ra_traj = false;
+  ra_pos = false;
+  ra_start = false;
+  wind_field.ra.length = 0;
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
