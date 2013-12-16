@@ -6,12 +6,12 @@ var normalWindSpeed = 10; // m/s to match latitude grid spacing
 var pos_radius = 4; // radius of the circle marking current position
 var paper; // Raphael paper for main plot
 var ra_background; // Raphael object for main background rectangle
-// var ra_wind_field = new Array(); // array of wind vectors
 var wind_field = {
   ra: new Array,
   pos: new trajectory_rec()
 };
 var ra_pos; // Current position object
+var ra_start; // Starting position object
 var ra_traj; // Trajectory path object
 var rubber, rubberx, rubbery, rubberdx, rubberdy;
 
@@ -102,13 +102,18 @@ function map_scale(x, y) {
 function draw_current_position() {
   var x = Math.round((cur_state.longitude-minLon) * XScale);
   var y = Math.round((maxLat - cur_state.latitude) * YScale);
-  if (ra_pos) {
-    ra_pos.remove();
+  if (!ra_start) {
+    ra_start = paper.circle(x, y, pos_radius).attr({ fill: "#f00", stroke: "#0f0",
+	  "stroke-width": 1}).show();
+  } else {
+    ra_start.toFront();
   }
-  ra_pos = paper.circle(x, y, pos_radius).attr({ fill: "#ff0", stroke: "#0f0",
-        "stroke-width": 1}).show();
-  // console.log("draw_current_position(" + cur_state.longitude.toFixed(2) + "," +
-    // cur_state.latitude.toFixed(2) + ") (" + x + ", " + y + ")");
+  if (ra_pos) {
+    ra_pos.attr({cx: x, cy: y}).toFront();
+  } else {
+    ra_pos = paper.circle(x, y, pos_radius).attr({ fill: "#ff0", stroke: "#0f0",
+	  "stroke-width": 1}).show();
+  }
 }
 
 function draw_map() {
@@ -116,7 +121,6 @@ function draw_map() {
   paper.clear();
   ra_traj = undefined;
   ra_pos = undefined;
-  ra_wind_field.length = 0;
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
@@ -189,12 +193,6 @@ function draw_map() {
   });
 }
 
-// for this, we only need to interpolat in time, since we are only
-// using points from the grid.
-// var xdim = 800;
-// var ydim = 600;
-// var thdim = 200;
-// var minWindFieldSpacing = 40; // pixels
 function draw_wind_field() {
   // We will scale winds so normalWindSpeed matches one latitude grid
   var NwindScale = (minWindFieldSpacing/YScale)/normalWindSpeed; // deg Lat per m/s
@@ -204,11 +202,11 @@ function draw_wind_field() {
   for (x = -minWindFieldSpacing/2; x < xdim + minWindFieldSpacing/2; x += minWindFieldSpacing) {
     var lon = x/XScale + minLon;
     for (y = -minWindFieldSpacing/2; y < ydim + minWindFieldSpacing/2; y += minWindFieldSpacing) {
-      var lat = maxLon - y/YScale;
+      var lat = maxLat - y/YScale;
       wind_field.pos.longitude = lon;
       wind_field.pos.latitude = lat;
       wind_field.pos.armtime = cur_state.cur_armtime;
-      wind = Model_Wind(pos, cur_model);
+      var wind = Model_Wind(wind_field.pos, cur_model);
       var lon1 = lon + wind.u*EwindScale;
       var lat1 = lat + wind.v*NwindScale;
       var ps = 'M' + map_scale(lon, lat) + "L" + map_scale(lon1, lat1);
@@ -217,7 +215,7 @@ function draw_wind_field() {
           alert('wind_field.ra length changed unexpectedly');
           return;
         }
-        wind_field.ra[i].attr({ path: ps });
+        wind_field.ra[i++].attr({ path: ps });
       } else {
         wind_field.ra.push(
           paper.path(ps).attr({ fill: "none", stroke: "#F00",
@@ -229,20 +227,24 @@ function draw_wind_field() {
 
 function draw_trajectory() {
   // console.log("draw_trajectory");
-  if (ra_traj) {
-    ra_traj.remove();
-    ra_traj = null;
-  }
-  var i;
+  // if (ra_traj) {
+  //  ra_traj.remove();
+  //  ra_traj = null;
+  // }
   var tr = cur_model.trajectory;
-  if (tr.length > 1) {
-    var ps = 'M' + map_scale(tr[0].longitude, tr[0].latitude);
-    for (i = 1; i < tr.length; ++i) {
+  var i = tr.length-1, j = 0;
+  if (i > 0) {
+    var ps = 'M' + map_scale(tr[i].longitude, tr[i].latitude);
+    for (i -= 60; i > 0 && ++j < 48; i -= 60) {
       ps = ps + 'L' + map_scale(tr[i].longitude, tr[i].latitude);
     }
-    ra_traj =
-      paper.path(ps).attr({ fill: "none", stroke: "#0F0",
-        "stroke-width": 1}).show();
+    if (ra_traj) {
+      ra_traj.attr({ path: ps });
+    } else {
+      ra_traj =
+	paper.path(ps).attr({ fill: "none", stroke: "#0F0",
+	  "stroke-width": 1}).show();
+    }
   }
 }
 
@@ -267,7 +269,7 @@ function draw_thrust_plot() {
   var wind_dir = Math.atan2(th_wind.u,th_wind.v) * 180/Math.PI;
   $("#wind_speed").html(wind_speed.toFixed(2) + " m/s");
   $("#wind_dir").html(wind_dir.toFixed(0) + "<sup>o</sup>");
-  var wind_max = Math.max(Math.max(Math.abs(wind.u),Math.abs(wind.v)), thrust_absmax);
+  var wind_max = Math.max(Math.max(Math.abs(th_wind.u),Math.abs(th_wind.v)), thrust_absmax);
   th_scale = thdim/(2*wind_max);
   var ps = polar_vector_path(th_scale, wind_speed, wind_dir);
   if (ra_th_wind) {
