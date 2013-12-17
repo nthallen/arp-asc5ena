@@ -25,7 +25,7 @@
       padding: 4px;
       background-color: #CCCCFF;
     }
-    .model_params input {
+    .model_params input, .model_params select {
       background-color: #AAAAFF;
     }
     #map_dimensions {
@@ -56,12 +56,15 @@
 <form>
 
 <div id="model_init">
-Model: <select id="models"></select> <span id="model_range"></span><br>
-Start Date: <select id="start_mon" name="start_mon"><option selected=selected value=1>Jan</option>
+<table class="model_params">
+<tr><th>Model:</th>
+  <td><select id="models"></select></td></tr>
+<tr><th>Model Dates:</th><td id="model_range"></td></tr>
+<tr><th>Start Date:</th><td><select id="start_mon" name="start_mon"><option value=1>Jan</option>
 <option value=2>Feb</option>
 <option value=3>Mar</option>
 <option value=4>Apr</option>
-<option value=5>May</option>
+<option value=5 selected="selected">May</option>
 <option value=6>Jun</option>
 <option value=7>Jul</option>
 <option value=8>Aug</option>
@@ -101,9 +104,11 @@ Start Date: <select id="start_mon" name="start_mon"><option selected=selected va
 <option value="29">29</option>
 <option value="30">30</option>
 <option value="31">31</option>
-</select> <select id="start_yr" name="start_yr"></select>
-<br>
-Flight Level: <input id="flight_level" name="flight_level" type="text" size="3" value="60"> <span id="flight_levels"></span><br>
+</select> <select id="start_yr" name="start_yr"></select></td></tr>
+<tr><th>Flight Level:</th>
+  <td><input id="flight_level" name="flight_level" type="text" size="3" value="60">
+    <span id="flight_levels"></span></td></tr>
+</table>
 <input type="button" id="StartBtn" value="Start"></div>
 
 <div id="model_run">

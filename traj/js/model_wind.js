@@ -24,7 +24,7 @@ function request_model_winds(armtime) {
   var jqxhr = $.ajax( "/cgi-bin/model_wind_field",
       { dataType: "json", data: opts } )
     .done(function(data) { model_winds_received(data); })
-    .fail(function() { alert( "error retrieving " + filename ); });
+    .fail(function() { alert( "error retrieving winds for armtime " + opts.armtime.toFixed(2) ); });
 }
 
 function load_model_winds() {
