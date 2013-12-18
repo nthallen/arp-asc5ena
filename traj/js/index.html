@@ -1,0 +1,124 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <title>ASC5ENA Trajectory Simulator</title>
+  <script src="jquery-1.7.1.min.js"></script>
+  <style type="text/css">
+    #cur_user, #new_user, #logged_in, #new_user_wait, #guest_acct,
+    #passwd_reset, #existing_user { display: none }
+    #logout { font-size: smaller }
+    .request { text-align: center }
+  </style>
+  <script>
+    function initialize() {
+      $("#initializing").hide();
+      $("#cur_user").show();
+      $("#guest_acct").show();
+    }
+    function logged_in(user) {
+      $("#initializing").hide();
+      $("#cur_user").hide();
+      $("#new_user").hide();
+      $("#guest_acct").hide();
+      $("#existing_user").hide();
+      $("#new_user_wait").hide();
+      $("#cur_username").html(user);
+      $("#logged_in").show();
+    }
+    function setup_functions() {
+      $("#logout").click(function() {
+          // log out on the server, then:
+          $("#username").val("");
+          $("#password").val("");
+          $("#logged_in").hide();
+          $("#new_user").hide();
+          $("#existing_user").hide();
+          $("#cur_user").show();
+          $("#guest_acct").show();
+        });
+      $("#login").click(function() {
+          // send credentials to server, then:
+          logged_in("A. User");
+        });
+      $("#create_acct").click(function () {
+          $("#cur_user").hide();
+          $("#new_user").show();
+          $("#existing_user").show();
+          return false;
+        });
+      $("#existing_user").click(function() {
+          $("#new_user").hide();
+          $("#existing_user").hide();
+          $("#cur_user").show();
+          return false;
+        });
+      $("#create").click(function() {
+          // Send info to server, then poll to see if/when
+          // new user has been created.
+          $("#new_user").hide();
+          $("#guest_acct").hide();
+          $("#existing_user").show();
+          $("#new_user_wait").show();
+          setTimeout(function() { logged_in("New User"); }, 3000);
+        });
+      $("#guest_acct").click(function() {
+          // send info to server, then:
+          logged_in("Guest");
+        });
+      $("#forgot_passwd").click(function() {
+          $("#cur_user").hide();
+          $("#passwd_reset").show();
+          $("#existing_user").show();
+        });
+      setTimeout(initialize, 3000);
+    }
+    $(document).ready(function(){ setup_functions(); })
+  </script>
+</head>
+<body>
+<h1>ASC5ENA Trajectory Simulator</h1>
+<div id="Instructions">
+<h2>Instructions</h2>
+</div>
+<div id="Login">
+  <form>
+    <div id="initializing">Initializing...
+    </div>
+    <div id="logged_in">
+      <table class="login">
+        <tr><th>user:</th><td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+      </table>
+    </div>
+    <div id="cur_user">
+      <table class="login">
+        <tr><th>username:</th><td><input id="username" name="username" type="text"></td></tr>
+        <tr><th>password:</th><td><input id="password" name="password" type="password"></td></tr>
+        <tr><td colspan="2" class="request"><input type="button" id="login" value="Login"></td></tr>
+      </table>
+      <a id="create_acct" href="#">create a new account</a> <a href="#" id="forgot_passwd">forgot password</a>
+    </div>
+    <div id="new_user">
+      <h2>Create a New Account</h2>
+      <table>
+        <tr><th>Full Name:</th><td><input id="fullname" name="fullname" type="text"></td></tr>
+        <tr><th>Email:</th><td><input id="email" name="email" type="text"></td></tr>
+        <tr><td colspan="2" class="request"><input type="button" id="create" value="Create"></td></tr>
+      </table>
+    </div>
+    <div id="new_user_wait">
+      <p>A confirmation email has been sent to you. Please check your email now.</p>
+    </div>
+    <div id="passwd_reset">
+      <h2>Reset Password</h2>
+      <table>
+         <tr><th>Email:</th><td><input id="email" name="email" type="text"></td></tr>
+        <tr><td colspan="2" class="request"><input type="button" id="create" value="Send Reset Email"></td></tr>
+      </table>
+    </div>
+    <a id="existing_user" href="#">login as existing user</a>
+    <a id="guest_acct" href="#">run as guest</a>
+  </form>
+</div>
+</body>
+</html>
