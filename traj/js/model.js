@@ -104,9 +104,9 @@ function format_hm(hour) {
 
 function update_table() {
   $("#run_position").html(cur_state.latitude.toFixed(2) + "N  " + cur_state.longitude.toFixed(2) + "E");
-  var minutes = Math.round((cur_state.cur_armtime - arm_epoch)*24*60);
+  var minutes = Math.round((cur_state.armtime - arm_epoch)*24*60);
   var date = new Date(minutes*60e3);
-  //$("#run_date").html( new Date((cur_state.cur_armtime - arm_epoch)*24*3600*1e3).toUTCString());
+  //$("#run_date").html( new Date((cur_state.armtime - arm_epoch)*24*3600*1e3).toUTCString());
   $("#run_date").html(
     date.getUTCFullYear() + " " +
     months[date.getUTCMonth()] + " " +
@@ -118,6 +118,7 @@ function update_table() {
 function init_flight_db_data(data) {
   if (data.status.match(/^success/i)) {
     cur_model.FlightID = data.FlightID;
+    $("#FlightID").html(" FlightID: " + data.FlightID);
     sequence_exec(); // Allows login_init() to be used in a sequence
   } else {
     alert("Error initializing flight in database");
@@ -125,9 +126,9 @@ function init_flight_db_data(data) {
 }
 
 function init_flight_db() {
-  console.dir(cur_state);
-  console.dir(cur_model.trajectory[0]);
-  var start = Math.round(cur_model.trajectory[0].armtime) - arm_epoch;
+  //console.dir(cur_state);
+  //console.dir(cur_model.trajectory[0]);
+  var start = Math.round(cur_state.armtime) - arm_epoch;
   var date = new Date(start * 24 * 3600 * 1e3);
   var startdate =
     date.getUTCFullYear() + "-" +
@@ -178,7 +179,7 @@ function flight_init() {
   $("#model_run").show();
   run_disable();
   cur_model = {
-    trajectory: [new trajectory_rec(cur_state)],
+    trajectory: [],
     armtimes: [], winds: [],
     model_name: models.names[mn],
     pressure: fl,
@@ -187,6 +188,7 @@ function flight_init() {
   };
   sequence_init([
       { Status: "Initializing flight in database...", Function: init_flight_db, Async: 1 },
+      { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
       { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
@@ -211,8 +213,8 @@ function flight_step() {
   run_disable();
   var run_step = parseInt($("#run_step").val());
   // console.log("run_step is " + run_step);
-  cur_state.end_armtime = cur_state.cur_armtime + 1/24;
-  cur_state.stop_armtime = cur_state.cur_armtime + run_step/24;
+  cur_state.end_armtime = cur_state.armtime + 1/24;
+  cur_state.stop_armtime = cur_state.armtime + run_step/24;
   flight_step2();
 }
 
@@ -229,11 +231,11 @@ function record_trajectory() {
   db_request({
       req: 'record_step',
       FlightID: cur_model.FlightID,
-      armtime: cur_state.cur_armtime,
-      Latitude: cur_state.latitude,
-      Longitude: cur_state.longitude,
-      Thrust: cur_state.lhrust,
-      Orientation: cur_state.orientation
+      armtime: cur_state.armtime.toFixed(3),
+      Latitude: cur_state.latitude.toFixed(4),
+      Longitude: cur_state.longitude.toFixed(4),
+      Thrust: cur_state.thrust.toFixed(3),
+      Orientation: cur_state.orientation.toFixed(4)
     }, record_traj_data);
 }
 
@@ -241,7 +243,7 @@ function flight_step2() {
   // console.log("flight_step2()");
   if (cur_state.error) {
     set_status("Error");
-  } else if (cur_state.cur_armtime < cur_state.end_armtime) {
+  } else if (cur_state.armtime < cur_state.end_armtime) {
     // console.log("flight_step2: sequence 1");
     sequence_init([
         { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
@@ -259,7 +261,8 @@ function flight_step2() {
 function flight_step3() {
   if (cur_state.error) {
     set_status("Error in flight_step3");
-  } else if (cur_state.cur_armtime < cur_state.stop_armtime) {
+  } else if (cur_state.armtime < cur_state.stop_armtime) {
+    cur_state.end_armtime = cur_state.armtime + 1/24;
     sequence_init([
         { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
         { Status: "Calculating trajectory ...", Function: Trajectory_Integrate },

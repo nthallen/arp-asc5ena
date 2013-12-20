@@ -13,7 +13,7 @@ function trajectory_rec(cur_state) {
     case 1:
       this.longitude = cur_state.longitude;
       this.latitude = cur_state.latitude;
-      this.armtime = cur_state.cur_armtime;
+      this.armtime = cur_state.armtime;
       this.thrust = cur_state.thrust;
       this.orientation = cur_state.orientation;
       break;
@@ -33,14 +33,14 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
     case 0:
       this.latitude = 0;
       this.longitude = 0;
-      this.cur_armtime = 0;
+      this.armtime = 0;
       this.end_armtime = 0;
       this.stop_armtime = 0;
       break;
     case 1:
       this.latitude = lat.latitude;
       this.longitude = lat.longitude;
-      this.cur_armtime = lat.cur_armtime;
+      this.armtime = lat.armtime;
       this.end_armtime = lat.end_armtime;
       this.stop_armtime = lat.end_armtime;
       this.thrust = lat.thrust;
@@ -53,7 +53,7 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
     case 4:
       this.latitude = lat;
       this.longitude = lon;
-      this.cur_armtime = cur_time;
+      this.armtime = cur_time;
       this.end_armtime = cur_time + step;
       this.stop_armtime = this.end_armtime;
       break;
@@ -106,16 +106,16 @@ function Trajectory_Integrate() {
     { weight:1.0/6.0, interp:1.0 } ];
   var nrk = rk.length;
 
-  while ( cur_state.cur_armtime < cur_state.end_armtime &&
-          cur_state.cur_armtime < cur_model.armtimes[1]) {
+  while ( cur_state.armtime < cur_state.end_armtime &&
+          cur_state.armtime < cur_model.armtimes[1]) {
     var dpos = new trajectory_rec();
     var dposa = new Array();
     var i;
 
-    if (cur_state.end_armtime-cur_state.cur_armtime < 1.25 * dt) {
-      dt = cur_state.end_armtime - cur_state.cur_armtime;
+    if (cur_state.end_armtime-cur_state.armtime < 1.25 * dt) {
+      dt = cur_state.end_armtime - cur_state.armtime;
     }
-    //console.log("Int: " + cur_state.cur_armtime.toFixed(3) +
+    //console.log("Int: " + cur_state.armtime.toFixed(3) +
     //  " Lon: " + cur_state.longitude.toFixed(3));
     for (i=0; i < nrk; ++i) {
       //  Define a temporary position, the one at which the wind field is to be 
@@ -124,10 +124,10 @@ function Trajectory_Integrate() {
       var temp_pos = new trajectory_rec();
       temp_pos.longitude = cur_state.longitude + rk[i].interp * dpos.longitude;
       temp_pos.latitude = cur_state.latitude + rk[i].interp * dpos.latitude;
-      temp_pos.armtime = cur_state.cur_armtime + rk[i].interp * dpos.armtime;
+      temp_pos.armtime = cur_state.armtime + rk[i].interp * dpos.armtime;
       
       if (isNaN(temp_pos.longitude) || isNaN(temp_pos.latitude)) {
-        console.log("NaN in temp_pos: armtime: " + cur_state.cur_armtime.toFixed(3));
+        console.log("NaN in temp_pos: armtime: " + cur_state.armtime.toFixed(3));
         cur_state.error = 1;
         return 1;
       }
@@ -149,7 +149,7 @@ function Trajectory_Integrate() {
         return 1;
       }
       if (isNaN(wind.u) || isNaN(wind.v)) {
-        console.log("NaN in winds: armtime: " + cur_state.cur_armtime.toFixed(3));
+        console.log("NaN in winds: armtime: " + cur_state.armtime.toFixed(3));
         cur_state.error = 1;
         return 1;
       }
@@ -189,7 +189,7 @@ function Trajectory_Integrate() {
 
     cur_state.longitude += dpos.longitude;
     cur_state.latitude += dpos.latitude;
-    cur_state.cur_armtime += dpos.armtime;
+    cur_state.armtime += dpos.armtime;
 
     //  Store the new position in the output trajectory array. 
     // var tr = new trajectory_rec(cur_state);
@@ -200,8 +200,8 @@ function Trajectory_Integrate() {
       // cur_model.trajectory.push(tr);
     // }
   }
-  if (cur_state.end_armtime-cur_state.cur_armtime < 1.0/(3600*24)) {
-    cur_state.cur_armtime = cur_state.end_armtime;
+  if (cur_state.end_armtime-cur_state.armtime < 1.0/(3600*24)) {
+    cur_state.armtime = cur_state.end_armtime;
   }
 
   //  Done.

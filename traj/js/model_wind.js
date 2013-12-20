@@ -29,7 +29,7 @@ function request_model_winds(armtime) {
 
 function load_model_winds() {
   // Use cur_state and cur_model
-  var armtime = cur_state.cur_armtime;
+  var armtime = cur_state.armtime;
   // var mess = "load_model_winds(" + armtime.toFixed(3) + ") with ";
   // var i;
   // for (i = 0; i < cur_model.armtimes.length; ++i) {

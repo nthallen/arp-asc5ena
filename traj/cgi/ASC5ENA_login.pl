@@ -190,6 +190,9 @@ sub main {
           {}, $ConfKey);
         print $cgi->redirect($html . "/resetpw.html");
         return;
+      } else {
+	print $cgi->redirect($html . "/badkey.html");
+	return;
       }
     } else {
       print $cgi->redirect($html . "/fail.html");

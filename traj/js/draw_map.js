@@ -211,7 +211,7 @@ function draw_wind_field() {
       var lat = maxLat - y/YScale;
       wind_field.pos.longitude = lon;
       wind_field.pos.latitude = lat;
-      wind_field.pos.armtime = cur_state.cur_armtime;
+      wind_field.pos.armtime = cur_state.armtime;
       var wind = Model_Wind(wind_field.pos, cur_model);
       var lon1 = lon + wind.u*EwindScale;
       var lat1 = lat + wind.v*NwindScale;
@@ -241,7 +241,7 @@ function draw_trajectory() {
   var i = tr.length-1, j = 0;
   if (i > 0) {
     var ps = 'M' + map_scale(tr[i].longitude, tr[i].latitude);
-    for (i -= 60; i > 0 && ++j < 48; i -= 60) {
+    for (i--; i > 0 && ++j < 48; --i) {
       ps = ps + 'L' + map_scale(tr[i].longitude, tr[i].latitude);
     }
     if (ra_traj) {
@@ -269,7 +269,7 @@ function draw_thrust_plot() {
   var temp_pos = new trajectory_rec();
   temp_pos.longitude = cur_state.longitude;
   temp_pos.latitude = cur_state.latitude;
-  temp_pos.armtime = cur_state.cur_armtime;
+  temp_pos.armtime = cur_state.armtime;
   th_wind = Model_Wind(temp_pos, cur_model);
   var wind_speed = Math.sqrt(th_wind.u*th_wind.u + th_wind.v*th_wind.v);
   var wind_dir = Math.atan2(th_wind.u,th_wind.v) * 180/Math.PI;
