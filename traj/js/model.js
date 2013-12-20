@@ -7,6 +7,37 @@ function model_init() {
       alert( "error" );
     });
 }
+function db_request(opts, always_func) {
+  $.ajax( "/cgi-bin/ASC5ENA_login.pl", { data: opts, dataType: "json" } )
+    .fail(function() {
+      alert( "Ajax request failed" );
+    })
+  .always(function(data, textstatus, jqXHR) {
+    if (data.status && typeof(data.status) == 'string') {
+      if (data.status.match(/^success/i)) {
+	always_func(data);
+      } else {
+	alert(data.status);
+      }
+    }
+  });
+}
+
+var UserID;
+var hosthtml = "https://fugue.arp.harvard.edu/ASC5ENA.dev";
+
+function login_init() {
+  db_request({ req: "initialize" }, init_data);
+}
+function init_data(data) {
+  if (data.status.match(/^success: logged_in/i)) {
+    $("#fullname").html(data.fullname);
+    sequence_exec(); // Allows login_init() to be used in a sequence
+  } else {
+    alert("Credentials did not check out");
+    window.location.assign(hosthtml + "/index.html");
+  }
+}
 
 var models;
 var arm_epoch = 719529; // 1/1/1970
@@ -84,6 +115,33 @@ function update_table() {
     format_hm(date.getUTCMinutes()));
 }
 
+function init_flight_db_data(data) {
+  if (data.status.match(/^success/i)) {
+    cur_model.FlightID = data.FlightID;
+    sequence_exec(); // Allows login_init() to be used in a sequence
+  } else {
+    alert("Error initializing flight in database");
+  }
+}
+
+function init_flight_db() {
+  console.dir(cur_state);
+  console.dir(cur_model.trajectory[0]);
+  var start = Math.round(cur_model.trajectory[0].armtime) - arm_epoch;
+  var date = new Date(start * 24 * 3600 * 1e3);
+  var startdate =
+    date.getUTCFullYear() + "-" +
+    format_hm(date.getUTCMonth()+1) + "-" +
+    format_hm(date.getUTCDate()) + " " +
+    '00:00:00';
+  db_request({
+      req: 'create_flight',
+      model: cur_model.model_name,
+      level: cur_model.pressure,
+      start: startdate
+    }, init_flight_db_data );
+}
+
 function flight_init() {
   var mn = $("#models").val();
   var mdl = models.names[mn];
@@ -98,10 +156,7 @@ function flight_init() {
   stDate.setUTCMinutes(0);
   stDate.setUTCSeconds(0);
   stDate.setUTCMilliseconds(0);
-  // console.log("Requested Start Field: " + start_mon + "/" + start_day + "/" + start_year);
-  // console.log("Requested Start Date: " + stDate.toUTCString());
   var armtime = arm_epoch + stDate.getTime()/(1e3*3600*24);
-  // console.log("Requested Start armtime: " + armtime);
   if (armtime < models.timeranges[mn*2] || armtime > models.timeranges[mn*2+1]) {
     alert('Start time is outside available model range');
     return 0;
@@ -127,9 +182,11 @@ function flight_init() {
     armtimes: [], winds: [],
     model_name: models.names[mn],
     pressure: fl,
+    FlightID: 0,
     model_timestep: models.timesteps[mn]
   };
   sequence_init([
+      { Status: "Initializing flight in database...", Function: init_flight_db, Async: 1 },
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
       { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },

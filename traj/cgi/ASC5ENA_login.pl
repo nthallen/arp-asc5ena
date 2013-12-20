@@ -8,8 +8,9 @@ use CGI::Cookie;
 use POSIX;
 use DBI;
 
-my $host = 'http://localhost';
-# my $host = 'https://fugue.arp.harvard.edu';
+# my $host = 'http://localhost';
+my $host = 'https://fugue.arp.harvard.edu';
+my $html = $host . '/ASC5ENA.dev';
  
 main();
 
@@ -30,7 +31,7 @@ sub create_confirmation_key {
   my $try;
   my $key;
   for ($try = 0; $try < 3; ++$try) {
-    $key = "K" . (time() * floor(rand(1000000)));
+    $key = "K" . time() . floor(rand(1000000));
     eval {
       $dbh->do('INSERT INTO Confirmation (ConfKey, UserID)
         VALUES (?, ?)', {}, $key, $UserID);
@@ -187,11 +188,35 @@ sub main {
           {}, $UserID);
         $dbh->do("DELETE FROM Confirmation WHERE ConfKey = ?",
           {}, $ConfKey);
-        print $cgi->redirect($host . "/ASC5ENA/resetpw.html");
+        print $cgi->redirect($html . "/resetpw.html");
         return;
       }
     } else {
-      print $cgi->redirect("http://localhost/nodice.html");
+      print $cgi->redirect($html . "/fail.html");
+      return;
+    }
+  } elsif ($req eq 'create_flight') {
+    my %cookies = CGI::Cookie->fetch;
+    my $key = $cookies{ASC5ENA_Session};
+    if ( $key ) {
+      my $Session_Key = $key->value;
+      my ($UserID) = $dbh->selectrow_array(
+        'SELECT UserID FROM Session WHERE Session_Key = ?',
+        {}, $Session_Key);
+      if ($UserID) {
+	my $model = $cgi->param('model') || 'unspecified';
+	my $level = $cgi->param('level') || 60;
+	my $start = $cgi->param('start') || '0000-00-00 00:00:00';
+	$dbh->do(
+	  'INSERT INTO Flight (UserID, Model, Level, StartDate, Comments)
+	   VALUES (?,?,?,?,?)', {},
+	   $UserID, $model, $level, $start, '');
+	my $FlightID = $dbh->{mysql_insertid};
+	$rv{FlightID} = $FlightID;
+	$status = "Success: New flight created";
+      } else {
+	$status = "Failure: Unable to determine user";
+      }
     }
   }
   print $cgi->header(%header);

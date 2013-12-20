@@ -361,6 +361,7 @@ function setup_canvases() {
   thrust = Raphael("thrust", thdim, thdim);
   thrust_bg = thrust.rect(0, 0, thdim, thdim, 5).attr({fill: "#000", stroke: "none"});
   sequence_init([
+    { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
     { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
 }
 

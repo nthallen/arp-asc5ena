@@ -78,7 +78,9 @@
     }
     function create_data(data) {
       $(".Ainputs").hide();
-      $("#status_info").html(data.status);
+      $("#status_info").html(
+        "<p>A confirmation message has been sent." +
+	"Please check your email now in order to complete your registration.</p>");
       $(".wait_confirm").show();
     }
 

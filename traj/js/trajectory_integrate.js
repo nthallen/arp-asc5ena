@@ -13,7 +13,7 @@ function trajectory_rec(cur_state) {
     case 1:
       this.longitude = cur_state.longitude;
       this.latitude = cur_state.latitude;
-      this.armtime = cur_state.armtime;
+      this.armtime = cur_state.cur_armtime;
       this.thrust = cur_state.thrust;
       this.orientation = cur_state.orientation;
       break;
