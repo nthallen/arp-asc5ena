@@ -1,0 +1,5 @@
+#! /bin/sh
+# Uses ./.my.arch.cnf to specify the user and password for
+# user with drop and create table privileges for ACT
+srcdir=`dirname $0`
+mysql --defaults-extra-file=$srcdir/.my.asc.cnf

@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+ <title>ASC5ENA Flight Simulator Password Update</title>
+ <script src="jquery-1.7.1.min.js"></script>
+ <style type="text/css">
+    #passwd_form, #success, #failure { display: none }
+    #fail_message { color: red }
+    .model_params { margin: 15px }
+    .model_params th { text-align: right }
+    .model_params th, .model_params td {
+      border: 1px solid black;
+      padding: 4px;
+      background-color: #CCCCFF;
+    }
+    .model_params input {
+      background-color: #AAAAFF;
+    }
+    #submission { text-align: center }
+  </style>
+  
+  <script>
+    var host = "http://localhost";
+    function init_data(data) {
+      console.dir(data);
+      if (data.status) {
+        if (data.status.match(/^success: logged_in/i)) {
+          $("#fullname").html(data.fullname);
+          $("#passwd_form").show();
+        } else if (data.status.match(/^success: logged_out/i)) {
+          $("#fail_message").html("Invalid Key");
+          $("#failure").show();
+        } else if (data.status.match(/^fail/i)) {
+          $("#fail_message").html("Initialization failed: " + data.status);
+          $("#failure").show();
+        } else {
+          alert('Unknown status from set password: ' + data.status);
+        }
+      } else {
+        alert('Invalid data returned from set password request');
+      }
+    }
+    function password_results(data) {
+      console.dir(data);
+      if (data.status) {
+        if (data.status.match(/^success/i)) {
+          $("#passwd_form").hide();
+          $("#success").show();
+          setTimeout(function() {
+              window.location.assign(host + "/ASC5ENA/index.html");
+            }, 3000);
+        } else if (data.status.match(/^fail/i)) {
+          $("#fail_message").html(data.status);
+          $("#failure").show();
+        } else {
+          $("#fail_message").html('Unknown status from initialize: ' + data.status);
+          $("#failure").show();
+        }
+      } else {
+        $("#fail_message").html('Invalid data returned from initialize request');
+        $("#failure").show();
+      }
+    }
+    function ajax_request(opts, always_func) {
+      var jqxhr = $.ajax( "/cgi-bin/ASC5ENA_login.pl", { data: opts, dataType: "json" } )
+        .fail(function() {
+          alert( "error" );
+        })
+        .always(function(data, textstatus, jqXHR) {
+          always_func(data);
+        });
+    }
+    $(document).ready(function(){
+      ajax_request({ req: "initialize" }, init_data);
+      $("#submit").click(function () {
+          ajax_request({
+              req: "passwd_set",
+              password: $("#password").val()
+            }, password_results);
+        });
+    });
+  </script>
+</head>
+<body>
+<h1>ASC5ENA Flight Simulator</h1>
+<h2>Set Password</h2>
+
+<form id="passwd_form">
+<table class="model_params">
+<tr><th>Full Name:</th><td id="fullname"></td></tr>
+<tr><th>New Password:</th><td><input type="password" id="password"></td></tr>
+<tr><td colspan="2" id="submission"><input type="button" id="submit" value="submit"></td></tr>
+</table>
+</form>
+<div id="success">
+  Success! You will be redirected in 5 seconds
+</div>
+<div id="failure">
+  Failure!<br><span id="fail_message"></span><br>Get help.
+</div>
+</body>
+</html>
