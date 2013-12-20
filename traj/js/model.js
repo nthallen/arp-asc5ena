@@ -24,7 +24,7 @@ function db_request(opts, always_func) {
 }
 
 var UserID;
-var hosthtml = "https://fugue.arp.harvard.edu/ASC5ENA.dev";
+var hosthtml = "https://fugue.arp.harvard.edu/ASC5ENA";
 
 function login_init() {
   db_request({ req: "initialize" }, init_data);

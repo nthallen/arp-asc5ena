@@ -48,7 +48,7 @@
           $("#passwd_form").hide();
           $("#success").show();
           setTimeout(function() {
-              window.location.assign(host + "/ASC5ENA.dev/index.html");
+              window.location.assign(host + "/ASC5ENA/index.html");
             }, 3000);
         } else if (data.status.match(/^fail/i)) {
           $("#fail_message").html(data.status);

@@ -10,7 +10,7 @@ use DBI;
 
 # my $host = 'http://localhost';
 my $host = 'https://fugue.arp.harvard.edu';
-my $html = $host . '/ASC5ENA.dev';
+my $html = $host . '/ASC5ENA';
  
 main();
 
