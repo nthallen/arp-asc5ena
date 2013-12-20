@@ -211,8 +211,30 @@ function flight_step() {
   run_disable();
   var run_step = parseInt($("#run_step").val());
   // console.log("run_step is " + run_step);
-  cur_state.end_armtime = cur_state.cur_armtime + run_step/24;
+  cur_state.end_armtime = cur_state.cur_armtime + 1/24;
+  cur_state.stop_armtime = cur_state.cur_armtime + run_step/24;
   flight_step2();
+}
+
+function record_traj_data(data) {
+  if (data.status.match(/^success/i)) {
+    sequence_exec();
+  } else {
+    alert("Failure recording trajectory step");
+  }
+}
+
+function record_trajectory() {
+  cur_model.trajectory.push(new trajectory_rec(cur_state));
+  db_request({
+      req: 'record_step',
+      FlightID: cur_model.FlightID,
+      armtime: cur_state.cur_armtime,
+      Latitude: cur_state.latitude,
+      Longitude: cur_state.longitude,
+      Thrust: cur_state.lhrust,
+      Orientation: cur_state.orientation
+    }, record_traj_data);
 }
 
 function flight_step2() {
@@ -227,7 +249,23 @@ function flight_step2() {
         { Status: "Checking for completion ...", Function: flight_step2, Async: 1 }
       ]);
   } else {
-    // console.log("flight_step2: sequence 2");
+    sequence_init([
+        { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
+        { Status: "Checking for completion ...", Function: flight_step3, Async: 1 }
+      ]);
+  }
+}
+
+function flight_step3() {
+  if (cur_state.error) {
+    set_status("Error in flight_step3");
+  } else if (cur_state.cur_armtime < cur_state.stop_armtime) {
+    sequence_init([
+        { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
+        { Status: "Calculating trajectory ...", Function: Trajectory_Integrate },
+        { Status: "Checking for completion ...", Function: flight_step2, Async: 1 }
+      ]);
+  } else {
     sequence_init([
       { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
       { Status: "Drawing wind field ...", Function: draw_wind_field },

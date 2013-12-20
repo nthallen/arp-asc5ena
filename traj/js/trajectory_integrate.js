@@ -35,12 +35,14 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.longitude = 0;
       this.cur_armtime = 0;
       this.end_armtime = 0;
+      this.stop_armtime = 0;
       break;
     case 1:
       this.latitude = lat.latitude;
       this.longitude = lat.longitude;
       this.cur_armtime = lat.cur_armtime;
       this.end_armtime = lat.end_armtime;
+      this.stop_armtime = lat.end_armtime;
       this.thrust = lat.thrust;
       this.orientation = lat.orientation;
       break;
@@ -53,6 +55,7 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.longitude = lon;
       this.cur_armtime = cur_time;
       this.end_armtime = cur_time + step;
+      this.stop_armtime = this.end_armtime;
       break;
     default:
       alert("Invalid number of arguments for SC_State(): " + arguments.length);
@@ -189,15 +192,14 @@ function Trajectory_Integrate() {
     cur_state.cur_armtime += dpos.armtime;
 
     //  Store the new position in the output trajectory array. 
-    var tr = new trajectory_rec(cur_state);
-    if (cur_model.trajectory === undefined) {
-      alert('cur_model.trajectory undefined in Trajectory_Integrate');
-      cur_model.trajectory = [ tr ];
-    } else {
-      cur_model.trajectory.push(tr);
-    }
+    // var tr = new trajectory_rec(cur_state);
+    // if (cur_model.trajectory === undefined) {
+      // alert('cur_model.trajectory undefined in Trajectory_Integrate');
+      // cur_model.trajectory = [ tr ];
+    // } else {
+      // cur_model.trajectory.push(tr);
+    // }
   }
-  // console.log("Int: cur_armtime: " + cur_state.cur_armtime.toFixed(3));
   if (cur_state.end_armtime-cur_state.cur_armtime < 1.0/(3600*24)) {
     cur_state.cur_armtime = cur_state.end_armtime;
   }

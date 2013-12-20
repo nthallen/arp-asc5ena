@@ -204,18 +204,40 @@ sub main {
         'SELECT UserID FROM Session WHERE Session_Key = ?',
         {}, $Session_Key);
       if ($UserID) {
-	my $model = $cgi->param('model') || 'unspecified';
-	my $level = $cgi->param('level') || 60;
-	my $start = $cgi->param('start') || '0000-00-00 00:00:00';
-	$dbh->do(
-	  'INSERT INTO Flight (UserID, Model, Level, StartDate, Comments)
-	   VALUES (?,?,?,?,?)', {},
-	   $UserID, $model, $level, $start, '');
-	my $FlightID = $dbh->{mysql_insertid};
-	$rv{FlightID} = $FlightID;
-	$status = "Success: New flight created";
+        my $model = $cgi->param('model') || 'unspecified';
+        my $level = $cgi->param('level') || 60;
+        my $start = $cgi->param('start') || '0000-00-00 00:00:00';
+        $dbh->do(
+          'INSERT INTO Flight (UserID, Model, Level, StartDate, Comments)
+           VALUES (?,?,?,?,?)', {},
+           $UserID, $model, $level, $start, '');
+        my $FlightID = $dbh->{mysql_insertid};
+        $rv{FlightID} = $FlightID;
+        $status = "Success: New flight created";
       } else {
-	$status = "Failure: Unable to determine user";
+        $status = "Failure: Unable to determine user";
+      }
+    }
+  } elsif ($req eq 'record_step') {
+    my %cookies = CGI::Cookie->fetch;
+    my $key = $cookies{ASC5ENA_Session};
+    if ( $key ) {
+      my $Session_Key = $key->value;
+      my @params = qw(FlightID armtime Latitude Longitude Thrust Orientation);
+      my %p = map { ( $_ => $cgi->param($_) || '' ) } @params;
+      my ($Suid,$Fuid) = $dbh->selectrow_array(
+        'SELECT Session.UserID AS A, Flight.UserID
+         FROM Session, Flight
+         WHERE Session_Key = ? AND FlightID = ?',
+        {}, $Session_Key, $p{FlightID});
+      if ($Suid && $Fuid && $Suid == $Fuid) {
+        $dbh->do(
+          'INSERT INTO Trajectory (' .
+           join(', ', @params) .
+           ') VALUES (' .
+           join(', ', map '?', @params) .
+           ')', {}, map( $p{$_}, @params));
+        $status = "Success: Point recorded";
       }
     }
   }
