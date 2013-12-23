@@ -3,7 +3,8 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <title>ASC5ENA Trajectory Simulator</title>
-  <script src="jquery-1.7.1.min.js"></script>
+  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+  <script src="local.js" type="application/javascript"></script>
   <style type="text/css">
     .Ainputs { display: none }
     a.Ainputs { margin-right: 5px }
@@ -33,7 +34,7 @@
       if (arguments.length >= 3) {
         fail_function = fail_func;
       }
-      $.ajax( "/cgi-bin/ASC5ENA_login.pl", { data: opts, dataType: "json" } )
+      $.ajax( ajaxpl, { data: opts, dataType: "json" } )
         .fail(function() {
           alert( "Ajax request failed" );
         })

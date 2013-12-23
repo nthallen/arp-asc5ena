@@ -9,9 +9,12 @@ use POSIX;
 use DBI;
 
 # my $host = 'http://localhost';
-my $host = 'https://fugue.arp.harvard.edu';
-my $html = $host . '/ASC5ENA';
- 
+my $host = ($ENV{HTTPS} ? 'https' : 'http' ) . "://" . $ENV{HTTP_HOST};
+my $html = $host .
+  ( $ENV{REQUEST_URI} =~ m/ASC5ENA\.pl/ ) ?
+  '/ASC5ENA' :
+  '/ASC5ENA.dev';
+
 main();
 
 sub setup_session_key {

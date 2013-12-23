@@ -3,7 +3,8 @@
 <head>
  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
  <title>ASC5ENA Flight Simulator Password Update</title>
- <script src="jquery-1.7.1.min.js"></script>
+ <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+ <script src="local.js" type="application/javascript"></script>
  <style type="text/css">
     #passwd_form, #success, #failure { display: none }
     #fail_message { color: red }
@@ -21,7 +22,6 @@
   </style>
   
   <script>
-    var host = "https://fugue.arp.harvard.edu";
     function init_data(data) {
       console.dir(data);
       if (data.status) {
@@ -48,7 +48,7 @@
           $("#passwd_form").hide();
           $("#success").show();
           setTimeout(function() {
-              window.location.assign(host + "/ASC5ENA/index.html");
+              window.location.assign(hosthtml + "/index.html");
             }, 3000);
         } else if (data.status.match(/^fail/i)) {
           $("#fail_message").html(data.status);
@@ -63,7 +63,7 @@
       }
     }
     function ajax_request(opts, always_func) {
-      var jqxhr = $.ajax( "/cgi-bin/ASC5ENA_login.pl", { data: opts, dataType: "json" } )
+      var jqxhr = $.ajax( ajaxpl, { data: opts, dataType: "json" } )
         .fail(function() {
           alert( "error" );
         })

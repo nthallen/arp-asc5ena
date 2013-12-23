@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+ <title>ASC5ENA AJAX Tester</title>
+ <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+ <script src="local.js" type="application/javascript"></script>
+ <style type="text/css">
+    #canvas {
+      float: left;
+      margin: 15px;
+    }
+  </style>
+  
+  <script>
+    function ajax_result(data) {
+      console.dir(data);
+    }
+    function ajax_request(opts) {
+      var jqxhr = $.ajax( ajaxpl, { data: opts, dataType: "json" } )
+        .fail(function() {
+          alert( "error" );
+        })
+        .always(function(data, textstatus, jqXHR) {
+          ajax_result(data);
+        });
+    }
+      $(document).ready(function(){
+        $("#InitBtn").click(function() {
+            ajax_request({ req: "initialize" });
+          });
+        $("#LoginBtn").click(function() {
+            ajax_request({
+                req: "login",
+                username: "nort",
+                password: "foobar"
+              });
+          });
+        $("#GuestBtn").click(function() {
+            ajax_request({
+                req: "login",
+                username: "Guest",
+                password: "Guest"
+              });
+          });
+        $("#LogoutBtn").click(function() {
+            ajax_request({ req: "logout" });
+          });
+        $("#CreateBtn").click(function() {
+            ajax_request({
+                req: "create_user",
+                username: "nort",
+                fullname: "Norton Allen",
+                email: "allen@huarp.harvard.edu"
+              });
+          });
+        $("#ResetBtn").click(function() {
+            ajax_request({
+                req: "forgot_pw",
+                email: "allen@huarp.harvard.edu"
+              });
+          });
+      });
+  </script>
+</head>
+<body>
+<h1>ASC5ENA AJAX Tester</h1>
+
+<form>
+<p><input type="button" value="Initialize" id="InitBtn"></p>
+<p><input type="button" value="Create User" id="CreateBtn"></p>
+<p><input type="button" value="Login" id="LoginBtn"></p>
+<p><input type="button" value="Guest Login" id="GuestBtn"></p>
+<p><input type="button" value="Logout" id="LogoutBtn"></p>
+<p><input type="button" value="Password Reset" id="ResetBtn"></p>
+</form>
+</body>
+</html>

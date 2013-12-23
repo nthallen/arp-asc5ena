@@ -8,7 +8,7 @@ function model_init() {
     });
 }
 function db_request(opts, always_func) {
-  $.ajax( "/cgi-bin/ASC5ENA_login.pl", { data: opts, dataType: "json" } )
+  $.ajax( ajaxpl, { data: opts, dataType: "json" } )
     .fail(function() {
       alert( "Ajax request failed" );
     })
@@ -24,7 +24,6 @@ function db_request(opts, always_func) {
 }
 
 var UserID;
-var hosthtml = "https://fugue.arp.harvard.edu/ASC5ENA";
 
 function login_init() {
   db_request({ req: "initialize" }, init_data);
