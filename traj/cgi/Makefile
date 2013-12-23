@@ -5,7 +5,7 @@ DEST=/var/www/cgi-bin
 
 install-dev : $(DIST) ASC5ENA.pl
 	cp $(DIST) $(DEST)
-	cp ASC5ENA.pl ASC5ENA.dev.pl
+	cp ASC5ENA.pl $(DEST)/ASC5ENA.dev.pl
 install-rel : $(DIST) ASC5ENA.pl
 	cp $(DIST) ASC5ENA.pl $(DEST)
 	rm $(DEST)/ASC5ENA_login.pl

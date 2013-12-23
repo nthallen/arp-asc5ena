@@ -11,10 +11,10 @@ DIST+=jquery-1.7.1.min.js raphael.js
 DEVDIST=$(DIST) ajax.html
 
 install-dev : $(DEVDIST) local.dev.js
-	mkdir $(HTMLBASE).dev
+	[ -d $(HTMLBASE).dev ] || mkdir $(HTMLBASE).dev
 	cp $(DEVDIST) $(HTMLBASE).dev
 	cp local.dev.js $(HTMLBASE).dev/local.js
 install-rel : $(DIST) local.rel.js
-	mkdir $(HTMLBASE)
+	[ -d $(HTMLBASE) ] || mkdir $(HTMLBASE)
 	cp $(DIST) $(HTMLBASE)
 	cp local.rel.js $(HTMLBASE)/local.js

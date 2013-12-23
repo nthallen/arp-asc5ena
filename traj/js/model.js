@@ -260,7 +260,7 @@ function flight_step2() {
 function flight_step3() {
   if (cur_state.error) {
     set_status("Error in flight_step3");
-  } else if (cur_state.armtime < cur_state.stop_armtime) {
+  } else if (cur_state.armtime + 10/3600 < cur_state.stop_armtime) {
     cur_state.end_armtime = cur_state.armtime + 1/24;
     sequence_init([
         { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },

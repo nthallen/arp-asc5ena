@@ -3,8 +3,8 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <title>ASC5ENA Trajectory Simulator</title>
-  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
   <script src="local.js" type="application/javascript"></script>
+  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
   <style type="text/css">
     .Ainputs { display: none }
     a.Ainputs { margin-right: 5px }
@@ -33,6 +33,9 @@
       var fail_function;
       if (arguments.length >= 3) {
         fail_function = fail_func;
+      }
+      if ( ! ajaxpl ) {
+	alert('ajaxpl is undefined in ajax_request');
       }
       $.ajax( ajaxpl, { data: opts, dataType: "json" } )
         .fail(function() {
