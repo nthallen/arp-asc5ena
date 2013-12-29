@@ -127,7 +127,7 @@ function draw_map() {
   ra_pos = false;
   ra_start = false;
   wind_field.ra.length = 0;
-  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
+  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
     var BB = Map[i].BoundingBox;
@@ -137,7 +137,7 @@ function draw_map() {
         ps = ps + "L" + map_scale(Map[i].X[j], Map[i].Y[j]);
       }
       // alert(ps);
-      paper.path(ps).attr({ fill: "none", stroke: "#fff",
+      paper.path(ps).attr({ fill: "none", stroke: "#444",
         "stroke-width": 2}).show;
     }
   }
@@ -353,7 +353,7 @@ function set_status(text) {
 function setup_canvases() {
   paper = Raphael("canvas", xdim, ydim);
   paper.clear();
-  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#eee", stroke : "none"});
+  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
   $( "#zoomfull").click(function() {
     draw_all();
     return false;

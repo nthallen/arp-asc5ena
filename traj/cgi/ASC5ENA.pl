@@ -5,15 +5,17 @@ use warnings;
 
 use CGI;
 use CGI::Cookie;
+#use CGI::Carp;
 use POSIX;
 use DBI;
 
 # my $host = 'http://localhost';
 my $host = ($ENV{HTTPS} ? 'https' : 'http' ) . "://" . $ENV{HTTP_HOST};
 my $html = $host .
-  ( $ENV{REQUEST_URI} =~ m/ASC5ENA\.pl/ ) ?
-  '/ASC5ENA' :
-  '/ASC5ENA.dev';
+  (( $ENV{REQUEST_URI} =~ m/ASC5ENA\.pl/ ) ?
+   '/ASC5ENA' :
+   '/ASC5ENA.dev');
+my $form_url = $host . $ENV{SCRIPT_NAME};
 
 main();
 
@@ -54,8 +56,8 @@ sub create_confirmation_key {
     $message = "Please follow this link to reset your password:";
     $subject = "ASC5ENA Flight Simulator Password Reset";
   }
-  $message .= "\n\n  " .
-      $host . "/cgi-bin/ASC5ENA_login.pl?req=confirm&key=$key";
+  $message .= "\n\n  " . $form_url .
+      "?req=confirm&key=$key";
   if ( sendmail(
       To => $Email,
       From => 'webmaster@huarp.harvard.edu',
