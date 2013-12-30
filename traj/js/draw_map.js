@@ -166,7 +166,7 @@ function draw_map() {
       rubbery = y - $("#canvas").offset().top;
       rubberdx = 0;
       rubberdy = 0;
-      rubber = paper.rect(rubberx, rubbery, 1, 1, 0).attr({fill: "none", stroke : "#000" });
+      rubber = paper.rect(rubberx, rubbery, 1, 1, 0).attr({fill: "none", stroke : "#00F" });
       rubber.show;
     }
   },
@@ -266,11 +266,11 @@ function draw_thrust_plot() {
   // Note: If I renamed SC_State's cur_armtime member to armtime,
   // I could initialize this with cur_state, or even pass cur_state
   // to Model_Wind directly.
-  var temp_pos = new trajectory_rec();
-  temp_pos.longitude = cur_state.longitude;
-  temp_pos.latitude = cur_state.latitude;
-  temp_pos.armtime = cur_state.armtime;
-  th_wind = Model_Wind(temp_pos, cur_model);
+  // var temp_pos = new trajectory_rec();
+  // temp_pos.longitude = cur_state.longitude;
+  // temp_pos.latitude = cur_state.latitude;
+  // temp_pos.armtime = cur_state.armtime;
+  th_wind = Model_Wind(cur_state, cur_model);
   var wind_speed = Math.sqrt(th_wind.u*th_wind.u + th_wind.v*th_wind.v);
   var wind_dir = Math.atan2(th_wind.u,th_wind.v) * 180/Math.PI;
   $("#wind_speed").html(wind_speed.toFixed(2) + " m/s");
@@ -297,11 +297,11 @@ function draw_thrust_plot() {
       .attr({ fill: "none", stroke: "#0f0", "stroke_width": 1}).show();
   }
   draw_thrust_vector();
-  $("#thrust").click(function (event) { thrust_event(event); });
-  thrust_bg.drag(
-    function(dx,dy,x,y,event) { thrust_event(event); },// move handler
-    function(x,y,event) { thrust_event(event); },
-    function(event) {});
+  // $("#thrust").click(function (event) { thrust_event(event); });
+  // thrust_bg.drag(
+  //   function(dx,dy,x,y,event) { thrust_event(event); },// move handler
+  //   function(x,y,event) { thrust_event(event); },
+  //   function(event) {});
 }
 
 function thrust_event(event) {
@@ -359,7 +359,12 @@ function setup_canvases() {
     return false;
   });
   thrust = Raphael("thrust", thdim, thdim);
+  $("#thrust").click(function (event) { thrust_event(event); });
   thrust_bg = thrust.rect(0, 0, thdim, thdim, 5).attr({fill: "#000", stroke: "none"});
+  thrust_bg.drag(
+    function(dx,dy,x,y,event) { thrust_event(event); },// move handler
+    function(x,y,event) { thrust_event(event); },
+    function(event) {});
   sequence_init([
     { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
     { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);

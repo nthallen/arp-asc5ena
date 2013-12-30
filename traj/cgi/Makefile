@@ -8,4 +8,4 @@ install-dev : $(DIST) ASC5ENA.pl
 	cp ASC5ENA.pl $(DEST)/ASC5ENA.dev.pl
 install-rel : $(DIST) ASC5ENA.pl
 	cp $(DIST) ASC5ENA.pl $(DEST)
-	rm $(DEST)/ASC5ENA_login.pl
+	rm -f $(DEST)/ASC5ENA_login.pl

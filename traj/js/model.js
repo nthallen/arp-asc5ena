@@ -242,7 +242,7 @@ function flight_step2() {
   // console.log("flight_step2()");
   if (cur_state.error) {
     set_status("Error");
-  } else if (cur_state.armtime < cur_state.end_armtime) {
+  } else if (cur_state.armtime + 10/3600 < cur_state.end_armtime) {
     // console.log("flight_step2: sequence 1");
     sequence_init([
         { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
@@ -252,6 +252,8 @@ function flight_step2() {
   } else {
     sequence_init([
         { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
+	{ Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+	{ Status: "Update table ...", Function: update_table },
         { Status: "Checking for completion ...", Function: flight_step3, Async: 1 }
       ]);
   }
