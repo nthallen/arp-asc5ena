@@ -21,7 +21,7 @@ main();
 
 sub setup_session_key {
   my ($dbh, $UserID) = @_;
-  my $key = "K" . (time() * floor(rand(1000000)));
+  my $key = "K" . (time() * floor(rand(100000)));
   $dbh->do('INSERT INTO Session (Session_Key, UserID)
     VALUES ( ?, ? )', {}, $key, $UserID);
   return CGI::Cookie->new(
@@ -36,7 +36,7 @@ sub create_confirmation_key {
   my $try;
   my $key;
   for ($try = 0; $try < 3; ++$try) {
-    $key = "K" . time() . floor(rand(1000000));
+    $key = "K" . time() . floor(rand(100000));
     eval {
       $dbh->do('INSERT INTO Confirmation (ConfKey, UserID)
         VALUES (?, ?)', {}, $key, $UserID);
