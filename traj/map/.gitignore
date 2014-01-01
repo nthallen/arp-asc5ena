@@ -2,3 +2,5 @@
 *.shp
 *.shx
 *.txt
+*.asv
+trajectory.log
