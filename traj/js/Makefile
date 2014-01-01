@@ -7,6 +7,7 @@ DIST=index.html traj.html resetpw.html
 DIST+=model.js draw_map.js model_wind.js sequence.js trajectory_integrate.js
 DIST+=USMap.js
 DIST+=jquery-1.7.1.min.js raphael.js
+DIST+=ScreenShot1.png ScreenShot2.png
 
 DEVDIST=$(DIST) ajax.html
 

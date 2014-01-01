@@ -351,6 +351,9 @@ function set_status(text) {
 }
 
 function setup_canvases() {
+  xdim = $(window).width() - 480;
+  ydim = $(window).height() - 50;
+  // console.log('(xdim,ydim) = (' + xdim + ',' + ydim + ')');
   paper = Raphael("canvas", xdim, ydim);
   paper.clear();
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
