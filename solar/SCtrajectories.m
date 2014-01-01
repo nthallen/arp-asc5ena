@@ -72,6 +72,8 @@ for FlightID = trajectories
     if duration < 2
         continue;
     end
+    tvec = datevec(Traj.armtime(v(1)));
+    flight_date = sprintf('%d/%d/%d', tvec(2), tvec(3), tvec(1));
     steps = duration*24 * steps_per_hour;
     E_gen = zeros(length(v),1);
     EM_gen = zeros(length(v),1);
@@ -111,7 +113,7 @@ for FlightID = trajectories
         E_use(i) = hours * Thrust_Safety * (Balloon_Drag + Gondola_Drag) * ...
             V / Propeller_Efficiency;
         steps = hours * steps_per_hour;
-        armtimes = t0 + [1:steps]'/(steps_per_hour*24);
+        armtimes = t0 + (1:steps)'/(steps_per_hour*24);
         lats = interp1([t0 t1],[Traj.Latitude(v(i-1)) Traj.Latitude(v(i))], armtimes, 'linear', 'extrap');
         lons = interp1([t0 t1],[Traj.Longitude(v(i-1)) Traj.Longitude(v(i))], armtimes, 'linear', 'extrap');
         dirs = interp1([t0 t1],[Traj.Orientation(v(i-1)) Traj.Orientation(v(i))], armtimes, 'linear', 'extrap');
@@ -146,6 +148,7 @@ for FlightID = trajectories
         Battery_Charge(i) = Battery_Charge(i-1) + E_gen(i) - E_use(i);
         if Battery_Charge(i) > Battery_Capacity
             if isnan(Battery_Over(i-1))
+                Battery_Over(i-1) = Battery_Charge(i-1);
                 Battery_Over(i) = Battery_Charge(i);
             else
                 Battery_Over(i) = Battery_Over(i-1) + Battery_Charge(i) - Battery_Capacity;
@@ -153,6 +156,7 @@ for FlightID = trajectories
             Battery_Charge(i) = Battery_Capacity;
         elseif Battery_Charge(i) < 0
             if isnan(Battery_Under(i-1))
+                Battery_Under(i-1) = Battery_Charge(i-1);
                 Battery_Under(i) = Battery_Charge(i);
             else
                 Battery_Under(i) = Battery_Under(i-1) + Battery_Charge(i);
@@ -160,42 +164,45 @@ for FlightID = trajectories
             Battery_Charge(i) = 0;
         end
     end
-    E_net = E_gen - E_use;
     etime = Traj.armtime(v) - Traj.armtime(v(1));
-    day0 = find(diff([0; (sign(E_net)>=0)]) > 0);
-    day1 = find(diff([(sign(E_net)>=0); 0]) < 0);
-    day_net = zeros(size(day0));
-    day_etime = zeros(size(day0));
-    for i = 1:length(day0)
-        day_net(i) = sum(E_net(day0(i):day1(i)));
-        day_etime(i) = mean(etime(day0(i):day1(i)));
-    end
-    night0 = find(diff([0; (sign(E_net)<0)]) > 0);
-    night1 = find(diff([(sign(E_net)<0); 0]) < 0);
-    night_net = zeros(size(night0));
-    night_etime = zeros(size(night0));
-    for i = 1:length(night0)
-        night_net(i) = sum(E_net(night0(i):night1(i)));
-        night_etime(i) = mean(etime(night0(i):night1(i)));
-    end
+%     E_net = E_gen - E_use;
+%     day0 = find(diff([0; (sign(E_net)>=0)]) > 0);
+%     day1 = find(diff([(sign(E_net)>=0); 0]) < 0);
+%     day_net = zeros(size(day0));
+%     day_etime = zeros(size(day0));
+%     for i = 1:length(day0)
+%         day_net(i) = sum(E_net(day0(i):day1(i)));
+%         day_etime(i) = mean(etime(day0(i):day1(i)));
+%     end
+%     night0 = find(diff([0; (sign(E_net)<0)]) > 0);
+%     night1 = find(diff([(sign(E_net)<0); 0]) < 0);
+%     night_net = zeros(size(night0));
+%     night_etime = zeros(size(night0));
+%     for i = 1:length(night0)
+%         night_net(i) = sum(E_net(night0(i):night1(i)));
+%         night_etime(i) = mean(etime(night0(i):night1(i)));
+%     end
+%     
+%     figure;
+%     plot(etime, E_net*1e-3);
+%     title(sprintf('Flight Trajectory %d', FlightID));
+%     ylabel('KW');
+%     
+%     figure;
+%     plot(day_etime, day_net*1e-3, '*', night_etime, -night_net*1e-3, '+');
+%     title(sprintf('Flight Trajectory %d', FlightID));
+%     legend('day generation', 'night usage');
+%     ylabel('KWH');
+%     xlabel('Days');
     
     figure;
-    plot(etime, E_net*1e-3);
-    title(sprintf('Flight Trajectory %d', FlightID));
-    ylabel('KW');
-    
-    figure;
-    plot(day_etime, day_net*1e-3, '*', night_etime, -night_net*1e-3, '+');
-    title(sprintf('Flight Trajectory %d', FlightID));
-    legend('day generation', 'night usage');
+    plot(etime, Battery_Over*1e-3, 'g', ...
+        etime, Battery_Under*1e-3, 'r', ...
+        etime, Battery_Charge*1e-3, 'b'  ...
+        );
+    legend('Surplus','Deficit','Storage');
     ylabel('KWH');
     xlabel('Days');
-    
-    figure;
-    plot(etime, Battery_Charge*1e-3, etime, Battery_Over*1e-3, 'y', ...
-        etime, Battery_Under*1e-3, 'r');
-    ylabel('KWH');
-    xlabel('Days');
-    title(sprintf('Flight Trajectory %d: Battery Charge', FlightID));
+    title(sprintf('Flight Trajectory %d: %s: Battery Charge', FlightID, flight_date));
     drawnow;
 end
