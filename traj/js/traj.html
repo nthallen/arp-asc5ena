@@ -2,10 +2,12 @@
 <html>
 <head>
  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
- <title>ASC5ENA Trajectory Simulator</title>
+ <title>ASC5ENA Simulator</title>
  <script src="raphael.js" type="application/javascript"></script>
  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
  <style type="text/css">
+    h1 { margin-bottom: 0px }
+    #UserID { margin-top: 0px }
     #canvas {
       float: left;
       margin: 0px 15px;
@@ -44,6 +46,7 @@
   <script src="sequence.js" type="application/javascript"></script>
   <script src="model_wind.js" type="application/javascript"></script>
   <script src="model.js" type="application/javascript"></script>
+  <script src="SolarAzEl.js" type="application/javascript"></script>
   
   <script>
     $(document).ready(function(){ setup_canvases(); })
@@ -51,8 +54,8 @@
 </head>
 <body>
 <div id="canvas"></div>
-<h1>ASC5ENA Trajectory Simulator</h1>
-<p>User: <span id="fullname"></span><span id="FlightID"></span></p>
+<h1>ASC5ENA Simulator</h1>
+<p id="UserID">User: <span id="fullname"></span> <span id="FlightID"></span></p>
 <p><b>Status:</b> <span id="Status"></span></p>
 <form>
 
@@ -109,19 +112,26 @@
 <tr><th>Flight Level:</th>
   <td><input id="flight_level" name="flight_level" type="text" size="3" value="60">
     <span id="flight_levels"></span></td></tr>
+<tr><th>Battery Capacity:</th>
+  <td><span id="battery_capacity">23740</span> W-hr</td></tr>
 </table>
 <input type="button" id="StartBtn" value="Start"></div>
 
 <div id="model_run">
 <table class="model_params">
-<tr><th>Model:</th><td id="run_model"></td></tr>
-<tr><th>Pressure Level:</th><td id="run_pressure"></td></tr>
-<tr><th>Position:</th><td id="run_position"></td></tr>
-<tr><th>Date:</th><td id="run_date"></td></tr>
-<tr><th>Step Size:</th><td><input type="text" id="run_step" name="run_step" size="2" value="3"> hours</td></tr>
+  <tr><th>Model:</th><td><span id="run_model"></span>: <span id="run_pressure"></span></td></tr>
+  <tr><th>Date:</th><td id="run_date"></td></tr>
+  <tr><th>Position:</th><td id="run_position"></td></tr>
+  <tr><th>Sun:</th><td>Azi: <span id="SolAzi"></span> Ele: <span id="SolEle"></span></td></tr>
+  <tr><th>Battery:</th><td id="Battery_Charge"></td></tr>
 </table>
 <div id="thrust"></div>
-<input type="button" id="run_model_step" name="run_model_step" value="Run Step">
+<table class="model_params">
+  <tr><td><input type="checkbox" name="max_power"> Max Power</td></tr>
+  <tr><td>Step: <input type="text" id="run_step" name="run_step" size="2" value="3"> hrs
+    <input type="button" id="run_model_step" name="run_model_step" value="Run">
+    </td></tr>
+</table>
 
 <table class="model_params">
   <tr><td></td><th>Mag</th><th>Dir</th></tr>

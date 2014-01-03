@@ -9,6 +9,10 @@ function trajectory_rec(cur_state) {
       this.armtime = 0.0;
       this.thrust = 0.0;
       this.orientation = 0.0;
+      this.solazi = 0.0;
+      this.solele = 0.0;
+      this.battery_charge = 0.0;
+      this.surplus_energy = 0.0;
       break;
     case 1:
       this.longitude = cur_state.longitude;
@@ -16,6 +20,10 @@ function trajectory_rec(cur_state) {
       this.armtime = cur_state.armtime;
       this.thrust = cur_state.thrust;
       this.orientation = cur_state.orientation;
+      this.solazi = cur_state.solazi;
+      this.solele = cur_state.solele;
+      this.battery_charge = cur_state.battery_charge;
+      this.surplus_energy = cur_state.surplus_energy;
       break;
     default:
       alert("Invalid number of arguments in trajectory_rec(): " + arguments.length);
@@ -36,6 +44,12 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.armtime = 0;
       this.end_armtime = 0;
       this.stop_armtime = 0;
+      this.thrust = 0;
+      this.orientation = 0;
+      this.solazi = 0.0;
+      this.solele = 0.0;
+      this.battery_charge = 0.0;
+      this.surplus_energy = 0.0;
       break;
     case 1:
       this.latitude = lat.latitude;
@@ -45,6 +59,10 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.stop_armtime = lat.end_armtime;
       this.thrust = lat.thrust;
       this.orientation = lat.orientation;
+      this.solazi = lat.solazi;
+      this.solele = lat.solele;
+      this.battery_charge = lat.battery_charge;
+      this.surplus_energy = lat.surplus_energy;
       break;
     case 6:
       this.orientation = orientation;
@@ -56,6 +74,10 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.armtime = cur_time;
       this.end_armtime = cur_time + step;
       this.stop_armtime = this.end_armtime;
+      this.solazi = 0.0;
+      this.solele = 0.0;
+      this.battery_charge = 0.0;
+      this.surplus_energy = 0.0;
       break;
     default:
       alert("Invalid number of arguments for SC_State(): " + arguments.length);
@@ -191,14 +213,9 @@ function Trajectory_Integrate() {
     cur_state.latitude += dpos.latitude;
     cur_state.armtime += dpos.armtime;
 
-    //  Store the new position in the output trajectory array. 
-    // var tr = new trajectory_rec(cur_state);
-    // if (cur_model.trajectory === undefined) {
-      // alert('cur_model.trajectory undefined in Trajectory_Integrate');
-      // cur_model.trajectory = [ tr ];
-    // } else {
-      // cur_model.trajectory.push(tr);
-    // }
+    AzEl = SolarAzEl(cur_state.armtime,  cur_state.latitude, cur_state.longitude, 20);
+    cur_state.solazi = AzEl.Az;
+    cur_state.solele = AzEl.El;
   }
   if (cur_state.end_armtime-cur_state.armtime < 1.0/(3600*24)) {
     cur_state.armtime = cur_state.end_armtime;
