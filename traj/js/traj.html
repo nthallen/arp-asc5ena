@@ -6,21 +6,34 @@
  <script src="raphael.js" type="application/javascript"></script>
  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
  <style type="text/css">
-    h1 { margin-bottom: 0px }
-    #UserID { margin-top: 0px }
+    h1 {
+      margin-top: 4px;
+      margin-bottom: 0px;
+    }
+    #UserID {
+      margin-top: 0px;
+      font-size: smaller;
+    }
+    #fullname { color: #0088FF }
+    #StatusLine {
+      margin-top: 0.5em;
+      margin-bottom: 0px;
+      font-size: smaller;
+    }
     #canvas {
       float: left;
       margin: 0px 15px;
     }
     #thrust {
       float: left;
-      margin-top: 15px;
-      margin-right: 15px;
+      margin-top: 5px;
+      margin-right: 5px;
     }
-    #run_model_step {
-      margin-top: 15px;
+    #run_model_step { }
+    .model_params {
+      margin: 5px;
+      font-size: smaller;
     }
-    .model_params { margin: 15px }
     .model_params th { text-align: right }
     .model_params th, .model_params td {
       border: 1px solid black;
@@ -30,6 +43,7 @@
     .model_params input, .model_params select {
       background-color: #AAAAFF;
     }
+    .ctr, .model_params th.ctr { text-align: center }
     #map_dimensions {
       clear: left;
       float: left;
@@ -56,7 +70,8 @@
 <div id="canvas"></div>
 <h1>ASC5ENA Simulator</h1>
 <p id="UserID">User: <span id="fullname"></span> <span id="FlightID"></span></p>
-<p><b>Status:</b> <span id="Status"></span></p>
+<p id="StatusLine"><b>Status:</b> <span id="Status"></span></p>
+
 <form>
 
 <div id="model_init">
@@ -119,11 +134,12 @@
 
 <div id="model_run">
 <table class="model_params">
-  <tr><th>Model:</th><td><span id="run_model"></span>: <span id="run_pressure"></span></td></tr>
-  <tr><th>Date:</th><td id="run_date"></td></tr>
-  <tr><th>Position:</th><td id="run_position"></td></tr>
-  <tr><th>Sun:</th><td>Azi: <span id="SolAzi"></span> Ele: <span id="SolEle"></span></td></tr>
-  <tr><th>Battery:</th><td id="Battery_Charge"></td></tr>
+  <tr><th>Model:</th><td colspan="3"><span id="run_model"></span>: <span id="run_pressure"></span></td></tr>
+  <tr><th>Date:</th><td id="run_date"></td><th colspan="2" class="ctr">Power</th></tr>
+  <tr><th>Position:</th><td id="run_position"></td><th>Solar:</th><td id="solar_power"></td></tr>
+  <tr><th>Sun:</th><td>Az: <span id="SolAzi"></span> El: <span id="SolEle"></span></td>
+	<th>Drive:</th><td id="drive_power"></td></tr>
+  <tr><th>Battery:</th><td id="Battery_Charge" colspan="3"></td></tr>
 </table>
 <div id="thrust"></div>
 <table class="model_params">
