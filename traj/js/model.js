@@ -192,6 +192,7 @@ function flight_init() {
   $("#run_pressure").html(fl.toFixed(0) + " hPa");
   $("#run_model_step").click(function () { flight_step(); });
   init_solar_model();
+  init_thrust_model();
   calc_solar_power(cur_state);
   update_table();
   $("#model_init").hide();

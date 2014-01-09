@@ -198,7 +198,8 @@ function Trajectory_Integrate() {
 
       //  Do the integration according to the Runge-Kutta rule. 
 
-      dpos.longitude = u * ( dt * 86400 ) / ( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
+      dpos.longitude = u * ( dt * 86400 ) /
+	( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
       dpos.latitude = v * ( dt * 86400 ) / ( Re ) * 180/Math.PI;
       dpos.armtime = dt;
 
@@ -229,7 +230,7 @@ function Trajectory_Integrate() {
     var solar_power0 = cur_state.solar_power;
     calc_solar_power(cur_state);
     var net_energy = (0.5 * (solar_power0 + cur_state.solar_power) -
-      cur_state.drive_power) * dt;
+      cur_state.drive_power) * dt * 24;
     cur_state.battery_charge += net_energy;
     if (cur_state.battery_charge < 0) {
       cur_state.surplus_energy += cur_state.battery_charge;
@@ -283,36 +284,37 @@ function norm_cross(a, b) {
   var c =
     [ a[1]*b[2]-a[2]*b[1], 
       a[2]*b[0]-a[0]*b[2],
-      a[0]*b[1]-a[1]*b[0]]];
+      a[0]*b[1]-a[1]*b[0]];
   return c[0]*c[0] + c[1]*c[1] + c[2]*c[2];
 }
 
-var SPM; // this is the solar power model
+var SPM = {}; // this is the solar power model
 
 function init_solar_model() {
-  SPM.PF = 1300 * solar_cell_efficiency;
-  SPM.flat.normal = [0,0,1];
-  SPM.flat.area = packing_efficiency(2*a, 2*b);
-  SPM.hinge1.vertex = [1,0,0];
-  SPM.hinge1.area = 2 * packing_efficiency(2*a, h);
-  SPM.hinge2.vertex = [0,1,0];
-  SPM.hinge2.area = 2 * packing_efficiency(2*b, h);
+  var a = 2.5;
+  var b = 1.25;
+  var h = 2.5;
+  SPM.solar_cell_efficiency = 0.20;
+  SPM.PF = 1300 * SPM.solar_cell_efficiency;
+  SPM.flat = { normal: [0,0,1], area: packing_efficiency(2*a, 2*b) };
+  SPM.hinge1 = { vertex: [1,0,0], area: 2 * packing_efficiency(2*a, h) };
+  SPM.hinge2 = { vertex: [0,1,0], area: 2 * packing_efficiency(2*b, h) };
 }
 
 function calc_solar_power(state) {
   var AzEl = SolarAzEl(state.armtime,  state.latitude, state.longitude, 20);
   state.solazi = AzEl.Az;
   state.solele = AzEl.El;
-  var sun = sph2cartd(dirs(j)-SolAzi(j), SolEle(j), SolEle(j) > 0);
+  var sun = sph2cartd(state.orientation-state.solazi, state.solele, state.solele > 0);
   var WF = dot_product(SPM.flat.normal, sun);
   var theta = Math.acos(WF * Math.PI / 180);
-  WF = WF * SPM.PF * SPM.flat.area * Math.cos((Math.pow(theta/90,5) * Math.PI / 2);
-  var WH1 = norm_cross(MPM.hinge1.vertex,sun);
+  WF = WF * SPM.PF * SPM.flat.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
+  var WH1 = norm_cross(SPM.hinge1.vertex,sun);
   theta = Math.acos(WH1) * 180 / Math.PI;
-  WH1 = WH1 * MPM.PF * MPM.hinge1.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
-  var WH2 = norm_cross(MPM.hinge2.vertex,sun);
-  theta = acos(WH2) * 180 / Math.PI;
-  WH2 = WH2 * MPM.PF * MPM.hinge2.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
+  WH1 = WH1 * SPM.PF * SPM.hinge1.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
+  var WH2 = norm_cross(SPM.hinge2.vertex,sun);
+  theta = Math.acos(WH2) * 180 / Math.PI;
+  WH2 = WH2 * SPM.PF * SPM.hinge2.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
   var WM = WF + WH1 + WH2;
   state.solar_power = WM;
 }
@@ -328,9 +330,9 @@ function init_thrust_model() {
   var Thrust_Safety = 1.2;
   var Propeller_Efficiency = 0.5;
   var V; // Desired velocity m/s
-  for (V = thrust_max; V <= thrust_abs_max; V += 0.1) {
-    if (V+.05 > thrust_abs_max) {
-      V = thrust_abs_max;
+  for (V = thrust_max; V <= thrust_absmax; V += 0.1) {
+    if (V+.05 > thrust_absmax) {
+      V = thrust_absmax;
     }
     var Balloon_CD = (V-5)*(0.14-0.1)/(8-5) + 0.1;
     var Balloon_Drag = 0.5 * rho * V*V * Balloon_CD * Balloon_Area;
@@ -345,7 +347,7 @@ function init_thrust_model() {
 
 function calc_power_from_velocity(V) {
   var P;
-  var ivel = find_in_array(model.winds[0].lats, pos.latitude);
+  var ivel = find_in_array(TM.V, V);
   if (ivel.i < 0) {
     if (ivel.t < 0) {
       P = TM.P[0] * V/5;
