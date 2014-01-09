@@ -50,6 +50,8 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.solele = 0.0;
       this.battery_charge = 0.0;
       this.surplus_energy = 0.0;
+      this.solar_power = 0.0;
+      this.drive_power = 0.0;
       break;
     case 1:
       this.latitude = lat.latitude;
@@ -63,6 +65,8 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.solele = lat.solele;
       this.battery_charge = lat.battery_charge;
       this.surplus_energy = lat.surplus_energy;
+      this.solar_power = lat.solar_power;
+      this.drive_power = lat.drive_power;
       break;
     case 6:
       this.orientation = orientation;
@@ -78,6 +82,8 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.solele = 0.0;
       this.battery_charge = 0.0;
       this.surplus_energy = 0.0;
+      this.solar_power = 0.0;
+      this.drive_power = 0.0;
       break;
     default:
       alert("Invalid number of arguments for SC_State(): " + arguments.length);
@@ -134,6 +140,14 @@ function Trajectory_Integrate() {
     var dposa = new Array();
     var i;
 
+    // Calculate drive power
+    var thrust = cur_state.thrust;
+    cur_state.drive_power = calc_power_from_velocity(cur_state.thrust);
+    if (cur_state.solar_power < cur_state.drive_power && cur_state.battery_charge <= 0) {
+      thrust = 0;
+      cur_state.drive_power = 0;
+    }
+    
     if (cur_state.end_armtime-cur_state.armtime < 1.25 * dt) {
       dt = cur_state.end_armtime - cur_state.armtime;
     }
@@ -212,10 +226,20 @@ function Trajectory_Integrate() {
     cur_state.longitude += dpos.longitude;
     cur_state.latitude += dpos.latitude;
     cur_state.armtime += dpos.armtime;
-
-    AzEl = SolarAzEl(cur_state.armtime,  cur_state.latitude, cur_state.longitude, 20);
-    cur_state.solazi = AzEl.Az;
-    cur_state.solele = AzEl.El;
+    var solar_power0 = cur_state.solar_power;
+    calc_solar_power(cur_state);
+    var net_energy = (0.5 * (solar_power0 + cur_state.solar_power) -
+      cur_state.drive_power) * dt;
+    cur_state.battery_charge += net_energy;
+    if (cur_state.battery_charge < 0) {
+      cur_state.surplus_energy += cur_state.battery_charge;
+      cur_state.battery_charge = 0;
+    } else if (cur_state.battery_charge > cur_model.battery_capacity) {
+      cur_state.surplus_energy += cur_state.battery_charge - cur_model.battery_capacity;
+      cur_state.battery_charge = cur_model.battery_capacity;
+    } else {
+      cur_state.surplus_energy = 0;
+    }
   }
   if (cur_state.end_armtime-cur_state.armtime < 1.0/(3600*24)) {
     cur_state.armtime = cur_state.end_armtime;
@@ -226,3 +250,111 @@ function Trajectory_Integrate() {
   return 1;
 }
 
+function packing_efficiency(w, h, tile_edge) {
+  // area = packing_efficiency(w, h, tile_edge);
+  if (arguments.length < 3) {
+      tile_edge = 0.127; // 5"
+  }
+  // corners is the area lost at the corners from cutting a 5" square
+  // out of a 6" diameters circular wafer
+  var corners = 0.951;
+  var nw = Math.floor(w/tile_edge);
+  var nh = Math.floor(h/tile_edge);
+  var area = corners * nw * nh * tile_edge * tile_edge;
+  return area;
+}
+
+// Uses degrees
+function sph2cartd(az, elev, r) {
+  var elevr = elev * Math.PI / 180;
+  var azr = az * Math.PI / 180;
+  var z = r * Math.sin(elevr);
+  var rcoselev = r * Math.cos(elevr);
+  var x = rcoselev * Math.cos(azr);
+  var y = rcoselev * Math.sin(azr);
+  return [x,y,z];
+}
+
+function dot_product(a, b) {
+  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
+}
+
+function norm_cross(a, b) {
+  var c =
+    [ a[1]*b[2]-a[2]*b[1], 
+      a[2]*b[0]-a[0]*b[2],
+      a[0]*b[1]-a[1]*b[0]]];
+  return c[0]*c[0] + c[1]*c[1] + c[2]*c[2];
+}
+
+var SPM; // this is the solar power model
+
+function init_solar_model() {
+  SPM.PF = 1300 * solar_cell_efficiency;
+  SPM.flat.normal = [0,0,1];
+  SPM.flat.area = packing_efficiency(2*a, 2*b);
+  SPM.hinge1.vertex = [1,0,0];
+  SPM.hinge1.area = 2 * packing_efficiency(2*a, h);
+  SPM.hinge2.vertex = [0,1,0];
+  SPM.hinge2.area = 2 * packing_efficiency(2*b, h);
+}
+
+function calc_solar_power(state) {
+  var AzEl = SolarAzEl(state.armtime,  state.latitude, state.longitude, 20);
+  state.solazi = AzEl.Az;
+  state.solele = AzEl.El;
+  var sun = sph2cartd(dirs(j)-SolAzi(j), SolEle(j), SolEle(j) > 0);
+  var WF = dot_product(SPM.flat.normal, sun);
+  var theta = Math.acos(WF * Math.PI / 180);
+  WF = WF * SPM.PF * SPM.flat.area * Math.cos((Math.pow(theta/90,5) * Math.PI / 2);
+  var WH1 = norm_cross(MPM.hinge1.vertex,sun);
+  theta = Math.acos(WH1) * 180 / Math.PI;
+  WH1 = WH1 * MPM.PF * MPM.hinge1.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
+  var WH2 = norm_cross(MPM.hinge2.vertex,sun);
+  theta = acos(WH2) * 180 / Math.PI;
+  WH2 = WH2 * MPM.PF * MPM.hinge2.area * Math.cos(Math.pow(theta/90,5) * Math.PI / 2);
+  var WM = WF + WH1 + WH2;
+  state.solar_power = WM;
+}
+
+// Thrust Model
+var TM = { V: [], P: []};
+
+function init_thrust_model() {
+  var rho = 0.091; // kg/m^3
+  var Balloon_Area = 984.9; // m^2
+  var Gondola_Area = 7.67; // m^2
+  var Gondola_CD = 1.2;
+  var Thrust_Safety = 1.2;
+  var Propeller_Efficiency = 0.5;
+  var V; // Desired velocity m/s
+  for (V = thrust_max; V <= thrust_abs_max; V += 0.1) {
+    if (V+.05 > thrust_abs_max) {
+      V = thrust_abs_max;
+    }
+    var Balloon_CD = (V-5)*(0.14-0.1)/(8-5) + 0.1;
+    var Balloon_Drag = 0.5 * rho * V*V * Balloon_CD * Balloon_Area;
+    var Gondola_Drag = 0.5 * rho * V*V * Gondola_CD * Gondola_Area;
+    // Tether_Drag...
+    var Power = Thrust_Safety * (Balloon_Drag + Gondola_Drag) *
+          V / Propeller_Efficiency;
+    TM.V.push(V);
+    TM.P.push(Power);
+  }
+}
+
+function calc_power_from_velocity(V) {
+  var P;
+  var ivel = find_in_array(model.winds[0].lats, pos.latitude);
+  if (ivel.i < 0) {
+    if (ivel.t < 0) {
+      P = TM.P[0] * V/5;
+    } else {
+      alert('Requested velocity outside limits');
+      P = 0.;
+    }
+  } else {
+    P = TM.P[ivel.i] * (1-ivel.t) + TM.P[ivel.i+1] * (ivel.t);
+  }
+  return P;
+}

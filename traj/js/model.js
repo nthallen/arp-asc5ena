@@ -125,6 +125,10 @@ function update_table() {
     surplus += se.toFixed(1) + "]";
   }
   $("#Battery_Charge").html(charge.toFixed(1) + surplus + " KWH");
+  var sp = cur_state.solar_power/1000;
+  $("#solar_power").html(sp.toFixed(1) + " KW");
+  var dp = cur_state.drive_power/1000;
+  $("#drive_power").html(dp.toFixed(1) + " KW");
 }
 
 function init_flight_db_data(data) {
@@ -187,9 +191,8 @@ function flight_init() {
   $("#run_model").html(models.fullnames[mn]);
   $("#run_pressure").html(fl.toFixed(0) + " hPa");
   $("#run_model_step").click(function () { flight_step(); });
-  var AzEl = SolarAzEl(cur_state.armtime,cur_state.latitude,cur_state.longitude,20);
-  cur_state.solazi = AzEl.Az;
-  cur_state.solele = AzEl.El;
+  init_solar_model();
+  calc_solar_power(cur_state);
   update_table();
   $("#model_init").hide();
   $("#model_run").show();
@@ -200,6 +203,7 @@ function flight_init() {
     model_name: models.names[mn],
     pressure: fl,
     FlightID: 0,
+    battery_capacity: cur_state.battery_charge,
     model_timestep: models.timesteps[mn]
   };
   sequence_init([
