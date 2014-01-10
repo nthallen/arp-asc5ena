@@ -1,0 +1,10 @@
+#! /bin/bash
+echo Deleting flight $1
+
+./dbinit <<EOF
+delete from Trajectory WHERE FlightID = $1;
+EOF
+
+./dbinit <<EOF
+delete from Flight WHERE FlightID = $1;
+EOF

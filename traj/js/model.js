@@ -256,7 +256,9 @@ function record_trajectory() {
       Latitude: cur_state.latitude.toFixed(4),
       Longitude: cur_state.longitude.toFixed(4),
       Thrust: cur_state.thrust.toFixed(3),
-      Orientation: cur_state.orientation.toFixed(4)
+      Orientation: cur_state.orientation.toFixed(4),
+      Battery_Energy: cur_state.battery_charge.toFixed(1),
+      Surplus_Energy: cur_state.surplus_energy.toFixed(1)
     }, record_traj_data);
 }
 

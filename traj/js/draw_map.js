@@ -297,11 +297,6 @@ function draw_thrust_plot() {
       .attr({ fill: "none", stroke: "#0f0", "stroke_width": 1}).show();
   }
   draw_thrust_vector();
-  // $("#thrust").click(function (event) { thrust_event(event); });
-  // thrust_bg.drag(
-  //   function(dx,dy,x,y,event) { thrust_event(event); },// move handler
-  //   function(x,y,event) { thrust_event(event); },
-  //   function(event) {});
 }
 
 function thrust_event(event) {
@@ -318,6 +313,9 @@ function thrust_event(event) {
   cur_state.thrust = drive_speed;
   cur_state.orientation = drive_dir;
   draw_thrust_vector();
+  cur_state.drive_power = calc_power_from_velocity(cur_state.thrust);
+  var dp = cur_state.drive_power/1000;
+  $("#drive_power").html(dp.toFixed(1) + " KW");
 }
 
 function draw_thrust_vector() {

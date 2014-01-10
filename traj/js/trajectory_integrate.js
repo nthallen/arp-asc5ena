@@ -193,8 +193,8 @@ function Trajectory_Integrate() {
       //console.dir(wind);
       //  Apply the thrust. 
 
-      var u = wind.u + cur_state.thrust * Math.sin( cur_state.orientation * Math.PI/180 );
-      var v = wind.v + cur_state.thrust * Math.cos( cur_state.orientation * Math.PI/180 );
+      var u = wind.u + thrust * Math.sin( cur_state.orientation * Math.PI/180 );
+      var v = wind.v + thrust * Math.cos( cur_state.orientation * Math.PI/180 );
 
       //  Do the integration according to the Runge-Kutta rule. 
 
