@@ -112,6 +112,23 @@ function update_table() {
     date.getUTCDate() + " " +
     format_hm(date.getUTCHours()) + ":" +
     format_hm(date.getUTCMinutes()));
+  $("#SolAzi").html(cur_state.solazi.toFixed(1));
+  $("#SolEle").html(cur_state.solele.toFixed(1));
+  var charge = cur_state.battery_charge/1000;
+  var surplus = '';
+  if (cur_state.surplus_energy != 0) {
+    surplus = " [";
+    if (cur_state.surplus_energy > 0) {
+      surplus += "+";
+    }
+    var se = cur_state.surplus_energy/1000;
+    surplus += se.toFixed(1) + "]";
+  }
+  $("#Battery_Charge").html(charge.toFixed(1) + surplus + " KWH");
+  var sp = cur_state.solar_power/1000;
+  $("#solar_power").html(sp.toFixed(1) + " KW");
+  var dp = cur_state.drive_power/1000;
+  $("#drive_power").html(dp.toFixed(1) + " KW");
 }
 
 function init_flight_db_data(data) {
@@ -170,9 +187,13 @@ function flight_init() {
   var stepsize = $("#run_step").val()/24;
   // validate stepsize as all numbers
   cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
+  cur_state.battery_charge = 23740; // Should be from cur_model
   $("#run_model").html(models.fullnames[mn]);
   $("#run_pressure").html(fl.toFixed(0) + " hPa");
   $("#run_model_step").click(function () { flight_step(); });
+  init_solar_model();
+  init_thrust_model();
+  calc_solar_power(cur_state);
   update_table();
   $("#model_init").hide();
   $("#model_run").show();
@@ -183,6 +204,7 @@ function flight_init() {
     model_name: models.names[mn],
     pressure: fl,
     FlightID: 0,
+    battery_capacity: cur_state.battery_charge,
     model_timestep: models.timesteps[mn]
   };
   sequence_init([
@@ -234,7 +256,9 @@ function record_trajectory() {
       Latitude: cur_state.latitude.toFixed(4),
       Longitude: cur_state.longitude.toFixed(4),
       Thrust: cur_state.thrust.toFixed(3),
-      Orientation: cur_state.orientation.toFixed(4)
+      Orientation: cur_state.orientation.toFixed(4),
+      Battery_Energy: cur_state.battery_charge.toFixed(1),
+      Surplus_Energy: cur_state.surplus_energy.toFixed(1)
     }, record_traj_data);
 }
 

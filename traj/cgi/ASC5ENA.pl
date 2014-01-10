@@ -231,7 +231,7 @@ sub main {
     my $key = $cookies{ASC5ENA_Session};
     if ( $key ) {
       my $Session_Key = $key->value;
-      my @params = qw(FlightID armtime Latitude Longitude Thrust Orientation);
+      my @params = qw(FlightID armtime Latitude Longitude Thrust Orientation Battery_Energy Surplus_Energy);
       my %p = map { ( $_ => $cgi->param($_) || '' ) } @params;
       my ($Suid,$Fuid) = $dbh->selectrow_array(
         'SELECT Session.UserID AS A, Flight.UserID

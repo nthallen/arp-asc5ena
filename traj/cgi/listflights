@@ -1,0 +1,7 @@
+#! /bin/bash
+./dbinit <<EOF
+SELECT FlightID, Username, DATE(StartDate) AS Start, Model, Level,
+ MAX(armtime) - MIN(armtime) as Days
+FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
+ GROUP BY Flight.FlightID;
+EOF

@@ -1,0 +1,4 @@
+ALTER TABLE Trajectory
+  DROP COLUMN Battery_Energy,
+  DROP COLUMN Max_Power,
+  ADD COLUMN Battery_Energy DOUBLE NOT NULL DEFAULT 0 COMMENT 'W-hr';

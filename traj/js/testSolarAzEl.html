@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+ <title>SolarAzEl Test</title>
+ <script src="raphael.js" type="application/javascript"></script>
+ <script src="g.raphael-min.js" type="application/javascript"></script>
+ <script src="g.line-min.js" type="application/javascript"></script>
+ <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+ <style type="text/css">
+    #canvas {
+      float: left;
+      margin: 0px 15px;
+    }
+    .model_params { margin: 15px }
+    .model_params th { text-align: right }
+    .model_params th, .model_params td {
+      border: 1px solid black;
+      padding: 4px;
+      background-color: #CCCCFF;
+    }
+    .model_params input, .model_params select {
+      background-color: #AAAAFF;
+    }
+  </style>
+  
+  <script src="SolarAzEl.js" type="application/javascript"></script>
+  <script src="AzElData.js" type="application/javascript"></script>
+  
+  <script>
+    var paper;
+    var xdim = 800;
+    var ydim = 200;
+    var xspc = 20;
+    var yspc = 20;
+    function setup_canvases() {
+      paper = Raphael("canvas", xdim, ydim);
+      var lat = 34.5;
+      var lon = -104.2;
+      var alt = 20;
+      var hour = new Array();
+      var Az2 = new Array();
+      var El2 = new Array();
+      var d0 = Math.floor(armtime[0]);
+      var i;
+      for (i = 0; i < armtime.length; ++i) {
+        hour[i] = (armtime[i] - d0) * 24;
+        var AzEl = SolarAzEl(armtime[i],lat,lon,alt);
+        Az2[i] = Az[i] - AzEl.Az;
+        El2[i] = El[i] - AzEl.El;
+      }
+      paper.linechart(xspc, 0, xdim-xspc, ydim-yspc, hour, [Az2,El2],
+        { axis: [0, 0, 1, 1], axisxstep: 24 });
+    }
+    $(document).ready(function(){ setup_canvases(); })
+  </script>
+</head>
+<body>
+<h1>Test SolarAzEl</h1>
+<div id="canvas"></div>
+</body>
+</html>

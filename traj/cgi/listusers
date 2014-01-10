@@ -1,0 +1,4 @@
+#! /bin/bash
+./dbinit <<EOF
+SELECT UserID, Username, FullName, Email FROM User;
+EOF
