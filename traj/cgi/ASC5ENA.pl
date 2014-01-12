@@ -71,6 +71,26 @@ sub create_confirmation_key {
   }
     
 }
+
+# Return UserID if cookie is present and defines a legitimate session
+# Updates the 'LastUsed' TimeStamp
+sub get_userID {
+  my %cookies = CGI::Cookie->fetch;
+  my $key = $cookies{ASC5ENA_Session};
+  if ( $key ) {
+    my $Session_Key = $key->value;
+    my ($UserID) = $dbh->selectrow_array(
+      'SELECT UserID FROM Session
+       WHERE Session_Key = ?', {}, $Session_Key);
+    if ($UserID) {
+      $dbh->do(
+        'UPDATE Session SET LastUsed = CURRENT_TIMESTAMP
+         WHERE Session_Key = ?', {}, $Session_Key);
+      return $UserID;
+    }
+  }
+  return 0;
+}
       
 sub main {
   my $cgi  = CGI->new();
@@ -83,14 +103,11 @@ sub main {
       'asc5ena', '5zzy$3kN3qBV7W',
       { PrintError => 0, RaiseError => 1 } );
   if ($req eq 'initialize') {
-    my %cookies = CGI::Cookie->fetch;
-    my $key = $cookies{ASC5ENA_Session};
-    if ( $key ) {
-      $key = $key->value;
+    my $UserID = get_userID();
+    if ( $UserID ) {
       my ($user, $passhash, $confirmed) = $dbh->selectrow_array(
-        'SELECT FullName, Password, Confirmed FROM Session
-          NATURAL JOIN User
-          WHERE Session_Key = ?', {}, $key);
+        'SELECT FullName, Password, Confirmed FROM User
+          WHERE UserID = ?', {}, $UserID);
       if (defined($user)) {
         if ($passhash ne '') {
           $status = 'Success: logged_in';
@@ -196,49 +213,39 @@ sub main {
         print $cgi->redirect($html . "/resetpw.html");
         return;
       } else {
-	print $cgi->redirect($html . "/badkey.html");
-	return;
+        print $cgi->redirect($html . "/badkey.html");
+        return;
       }
     } else {
       print $cgi->redirect($html . "/fail.html");
       return;
     }
   } elsif ($req eq 'create_flight') {
-    my %cookies = CGI::Cookie->fetch;
-    my $key = $cookies{ASC5ENA_Session};
-    if ( $key ) {
-      my $Session_Key = $key->value;
-      my ($UserID) = $dbh->selectrow_array(
-        'SELECT UserID FROM Session WHERE Session_Key = ?',
-        {}, $Session_Key);
-      if ($UserID) {
-        my $model = $cgi->param('model') || 'unspecified';
-        my $level = $cgi->param('level') || 60;
-        my $start = $cgi->param('start') || '0000-00-00 00:00:00';
-        $dbh->do(
-          'INSERT INTO Flight (UserID, Model, Level, StartDate, Comments)
-           VALUES (?,?,?,?,?)', {},
-           $UserID, $model, $level, $start, '');
-        my $FlightID = $dbh->{mysql_insertid};
-        $rv{FlightID} = $FlightID;
-        $status = "Success: New flight created";
-      } else {
-        $status = "Failure: Unable to determine user";
-      }
+    my $UserID = get_userID();
+    if ($UserID) {
+      my $model = $cgi->param('model') || 'unspecified';
+      my $level = $cgi->param('level') || 60;
+      my $start = $cgi->param('start') || '0000-00-00 00:00:00';
+      $dbh->do(
+        'INSERT INTO Flight (UserID, Model, Level, StartDate, Comments)
+         VALUES (?,?,?,?,?)', {},
+         $UserID, $model, $level, $start, '');
+      my $FlightID = $dbh->{mysql_insertid};
+      $rv{FlightID} = $FlightID;
+      $status = "Success: New flight created";
+    } else {
+      $status = "Failure: Unable to determine user";
     }
   } elsif ($req eq 'record_step') {
-    my %cookies = CGI::Cookie->fetch;
-    my $key = $cookies{ASC5ENA_Session};
-    if ( $key ) {
-      my $Session_Key = $key->value;
+    my $UserID = get_userID();
+    if ($UserID) {
       my @params = qw(FlightID armtime Latitude Longitude Thrust Orientation Battery_Energy Surplus_Energy);
       my %p = map { ( $_ => $cgi->param($_) || '' ) } @params;
-      my ($Suid,$Fuid) = $dbh->selectrow_array(
-        'SELECT Session.UserID AS A, Flight.UserID
-         FROM Session, Flight
-         WHERE Session_Key = ? AND FlightID = ?',
-        {}, $Session_Key, $p{FlightID});
-      if ($Suid && $Fuid && $Suid == $Fuid) {
+      my ($Fuid) = $dbh->selectrow_array(
+        'SELECT UserID FROM Flight
+         WHERE UserID = ? AND FlightID = ?',
+        {}, $UserID, $p{FlightID});
+      if ($Fuid) {
         $dbh->do(
           'INSERT INTO Trajectory (' .
            join(', ', @params) .
@@ -248,10 +255,57 @@ sub main {
         $status = "Success: Point recorded";
       }
     }
+  } elsif ($req eq 'list_flights') {
+    my $UserID = get_userID();
+    if ($UserID) {
+      my $flights = $dbh->selectall_arrayref(
+        'SELECT FlightID, Username, DATE(StartDate) AS Start,
+         Model, Level, MAX(armtime) - MIN(armtime) as Days
+         FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
+         WHERE UserID = ?
+         GROUP BY Flight.FlightID', {}, $UserID );
+      if ($flights && @$flights) {
+        $status = "Success: Flights listed";
+        $rv->{cols} = [ qw(FlightID Username Start Model Level Days) ];
+        $rv->{data} = $flights;
+      } else {
+        $status = "Success: No Flights Listed";
+      }
+    } else {
+      $status = "Failure: Invalid authentication";
+    }
   }
-  print $cgi->header(%header);
+  $rv{status} = $status;
+  
+  print $cgi->header(%header), json_dump(\$rv, "\n");
+}
 
-  print "{\n  \"status\": \"", $status, '"',
-    map( ",\n  \"$_\": \"" . $rv{$_} . '"', keys %rv),
-    "\n}\n";
+# $json = json_dump($obj, $indent);
+# $obj at the top level should be a hash ref
+# $indent: "\n" for formatted output
+#  '' or undef for compact output
+sub json_dump {
+  my ($out, $I1) = @_;
+  my $rv;
+  $I1 ||= '';
+  my $I2 = $I1 ? "$I1  " : '';
+  if (ref($out) ) {
+    if (ref($out) eq 'ARRAY') {
+      $rv = "[$I2" .
+        join(",$I2", map(json_dump($_,$I2), @$out)) .
+        "$I1]";
+    } elsif (ref($out) eq 'HASH') {
+      $rv = "{$I2" .
+        join(",$I2",
+          map( '"' . $_ . '": ' .
+            json_dump($out->{$_}, $I2),
+            keys %$out)) .
+          "$I1}";
+    } else {
+      $rv = '"<unknown>"';
+    }
+  } else {
+    $rv = '"' . $out . '"';
+  }
+  return $rv;
 }
