@@ -1,0 +1,14 @@
+.model_params {
+  margin: 5px;
+  font-size: smaller;
+}
+.model_params th { text-align: right }
+.model_params th, .model_params td {
+  border: 1px solid black;
+  padding: 4px;
+  background-color: #CCCCFF;
+}
+.model_params input, .model_params select {
+  background-color: #AAAAFF;
+}
+.ctr, .model_params th.ctr { text-align: center }
