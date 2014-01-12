@@ -75,6 +75,7 @@ sub create_confirmation_key {
 # Return UserID if cookie is present and defines a legitimate session
 # Updates the 'LastUsed' TimeStamp
 sub get_userID {
+  my $dbh = shift;
   my %cookies = CGI::Cookie->fetch;
   my $key = $cookies{ASC5ENA_Session};
   if ( $key ) {
@@ -103,7 +104,7 @@ sub main {
       'asc5ena', '5zzy$3kN3qBV7W',
       { PrintError => 0, RaiseError => 1 } );
   if ($req eq 'initialize') {
-    my $UserID = get_userID();
+    my $UserID = get_userID($dbh);
     if ( $UserID ) {
       my ($user, $passhash, $confirmed) = $dbh->selectrow_array(
         'SELECT FullName, Password, Confirmed FROM User
@@ -221,7 +222,7 @@ sub main {
       return;
     }
   } elsif ($req eq 'create_flight') {
-    my $UserID = get_userID();
+    my $UserID = get_userID($dbh);
     if ($UserID) {
       my $model = $cgi->param('model') || 'unspecified';
       my $level = $cgi->param('level') || 60;
@@ -237,7 +238,7 @@ sub main {
       $status = "Failure: Unable to determine user";
     }
   } elsif ($req eq 'record_step') {
-    my $UserID = get_userID();
+    my $UserID = get_userID($dbh);
     if ($UserID) {
       my @params = qw(FlightID armtime Latitude Longitude Thrust Orientation Battery_Energy Surplus_Energy);
       my %p = map { ( $_ => $cgi->param($_) || '' ) } @params;
@@ -256,18 +257,18 @@ sub main {
       }
     }
   } elsif ($req eq 'list_flights') {
-    my $UserID = get_userID();
+    my $UserID = get_userID($dbh);
     if ($UserID) {
       my $flights = $dbh->selectall_arrayref(
-        'SELECT FlightID, Username, DATE(StartDate) AS Start,
+        'SELECT FlightID, DATE(StartDate) AS Start,
          Model, Level, MAX(armtime) - MIN(armtime) as Days
          FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
          WHERE UserID = ?
          GROUP BY Flight.FlightID', {}, $UserID );
       if ($flights && @$flights) {
         $status = "Success: Flights listed";
-        $rv->{cols} = [ qw(FlightID Username Start Model Level Days) ];
-        $rv->{data} = $flights;
+        $rv{cols} = [ qw(FlightID Start Model Level Days) ];
+        $rv{data} = $flights;
       } else {
         $status = "Success: No Flights Listed";
       }
@@ -277,7 +278,7 @@ sub main {
   }
   $rv{status} = $status;
   
-  print $cgi->header(%header), json_dump(\$rv, "\n");
+  print $cgi->header(%header), json_dump(\%rv, "\n");
 }
 
 # $json = json_dump($obj, $indent);
