@@ -36,7 +36,7 @@
         fail_function = fail_func;
       }
       if ( ! ajaxpl ) {
-	alert('ajaxpl is undefined in ajax_request');
+        alert('ajaxpl is undefined in ajax_request');
       }
       $.ajax( ajaxpl, { data: opts, dataType: "json" } )
         .fail(function() {
@@ -68,6 +68,7 @@
     }
     function login_data(data) {
       logged_in(data.user);
+      ajax_request({ req: "list_flights" }, flight_data);
     }
     function login_fail_data(data) {
       alert(data.status);
@@ -85,8 +86,27 @@
       $(".Ainputs").hide();
       $("#status_info").html(
         "<p>A confirmation message has been sent." +
-	"Please check your email now in order to complete your registration.</p>");
+        "Please check your email now in order to complete your registration.</p>");
       $(".wait_confirm").show();
+    }
+    function flight_data(data) {
+      if (data.status.match(/^success: flights listed/i) {
+        $("#MyFlights").empty();
+        $("#MyFlights").html(
+            '<table class="model_params">' +
+            '<tr>' +
+            cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
+            '</tr>' +
+            data.map(function (arg) {
+                return "<tr>" +
+                  arg.map(function (b) {
+                      return "<td>" + b + "</td>";
+                    }).join('') + "</tr>";
+              }).join('') +
+            '</table>'
+          );
+        $("#MyFlights td, #MyFlights th").addClass('ctr');
+      }
     }
 
     function logged_in(user) {
