@@ -6,7 +6,7 @@ HTMLBASE=/var/www/html/ASC5ENA
 DIST=index.html traj.html resetpw.html ASC5ENA.css
 DIST+=model.js draw_map.js model_wind.js sequence.js trajectory_integrate.js
 DIST+=USMap.js SolarAzEl.js
-DIST+=jquery-1.7.1.min.js raphael.js
+DIST+=jquery-1.7.1.min.js raphael.js jquery.tablesorter.js
 DIST+=ScreenShot1.png ScreenShot2.png
 
 DEVDIST=$(DIST) ajax.html
