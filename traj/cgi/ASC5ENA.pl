@@ -260,14 +260,14 @@ sub main {
     my $UserID = get_userID($dbh);
     if ($UserID) {
       my $flights = $dbh->selectall_arrayref(
-        'SELECT FlightID, DATE(StartDate) AS Start,
-         Model, Level, MAX(armtime) - MIN(armtime) as Days
+        'SELECT FlightID, Model, Level, DATE(StartDate) AS Start,
+	   MAX(armtime) - MIN(armtime) as Days
          FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
          WHERE UserID = ?
          GROUP BY Flight.FlightID', {}, $UserID );
       if ($flights && @$flights) {
         $status = "Success: Flights listed";
-        $rv{cols} = [ qw(FlightID Start Model Level Days) ];
+        $rv{cols} = [ qw(FlightID Model Level Start Days) ];
         $rv{data} = $flights;
       } else {
         $status = "Success: No Flights Listed";

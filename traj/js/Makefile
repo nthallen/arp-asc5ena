@@ -16,6 +16,7 @@ install-dev : $(DEVDIST) local.dev.js
 	[ -d $(HTMLBASE).dev ] || mkdir $(HTMLBASE).dev
 	cp $(DEVDIST) $(HTMLBASE).dev
 	cp local.dev.js $(HTMLBASE).dev/local.js
+	rm -f $(HTMLBASE).dev/test_map.html
 install-rel : $(DIST) local.rel.js
 	[ -d $(HTMLBASE) ] || mkdir $(HTMLBASE)
 	cp $(DIST) $(HTMLBASE)

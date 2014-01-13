@@ -10,6 +10,10 @@
   <style type="text/css">
     .Ainputs { display: none }
     a.Ainputs { margin-right: 5px }
+    h2, h3 {
+      color: #0088FF;
+    }
+    #MyFlights h3 { margin-bottom: 0px }
     #logout { font-size: smaller }
     .request { text-align: center }
     #Instructions {
@@ -94,6 +98,7 @@
       if (data.status.match(/^success: flights listed/i)) {
         $("#MyFlights").empty();
         $("#MyFlights").html(
+	    '<h3>My Flights</h3>\n' +
             '<table id="FlightsTable" class="tablesorter"><thead>' +
             '<tr>' +
             data.cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
