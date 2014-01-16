@@ -9,6 +9,7 @@ DIST+=USMap.js SolarAzEl.js
 DIST+=jquery-1.7.1.min.js raphael.js jquery.tablesorter.js
 DIST+=ScreenShot1.png ScreenShot2.png
 DIST+=asc.gif bg.gif desc.gif
+DIST+=review.html
 
 DEVDIST=$(DIST) ajax.html
 

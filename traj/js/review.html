@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <title>ASC5ENA Trajectory Simulator</title>
+  <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
+  <script src="local.js" type="application/javascript"></script>
+  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+  <script src="jquery.tablesorter.js" type="application/javascript"></script>
+  <style type="text/css">
+    h2, h3 {
+      color: #0088FF;
+    }
+    #Review {
+      float: left;
+    }
+    #MyFlights h3 { margin-bottom: 0px }
+    #logout { font-size: smaller }
+  </style>
+  <script>
+    function ajax_request(opts, always_func, fail_func) {
+      var fail_function;
+      if (arguments.length >= 3) {
+        fail_function = fail_func;
+      }
+      if ( ! ajaxpl ) {
+        alert('ajaxpl is undefined in ajax_request');
+      }
+      $.ajax( ajaxpl, { data: opts, dataType: "json" } )
+        .fail(function() {
+          alert( "Ajax request failed" );
+        })
+        .always(function(data, textstatus, jqXHR) {
+          if (data.status && typeof(data.status) == 'string') {
+            if (data.status.match(/^success/i)) {
+              always_func(data);
+            } else if (fail_function) {
+              fail_function(data);
+            } else {
+              alert(data.status);
+            }
+          }
+        });
+    }
+    function initialize() {
+      ajax_request({ req: "initialize" }, init_data);
+    }
+    function init_data(data) {
+      if (data.status.match(/^success: logged_in/i)) {
+        logged_in(data.fullname);
+      } else if (data.status.match(/^success: logged_out/i)) {
+	window.location.href = hosthtml + "/";
+      } else {
+        alert('Unknown status from set password: ' + data.status);
+      }
+    }
+    function login_data(data) {
+      logged_in(data.user);
+    }
+    function login_fail_data(data) {
+      alert(data.status);
+    }
+    function logout_data(data) {
+      if (data.status.match(/^success: logged_in/i)) {
+        alert("Expected logged_out after logout request");
+      } else if (data.status.match(/^success: logged_out/i)) {
+        window.location.href = hosthtml + "/";
+      } else {
+        alert('Unknown status from set password: ' + data.status);
+      }
+    }
+    function create_data(data) {
+      $(".Ainputs").hide();
+      $("#status_info").html(
+        "<p>A confirmation message has been sent." +
+        "Please check your email now in order to complete your registration.</p>");
+      $(".wait_confirm").show();
+    }
+    function flight_data(data) {
+      if (data.status.match(/^success: flights listed/i)) {
+        $("#MyFlights").empty();
+        $("#MyFlights").html(
+	    '<h3>My Flights</h3>\n' +
+            '<table id="FlightsTable" class="tablesorter"><thead>' +
+            '<tr>' +
+            data.cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
+            '</tr></thead><tbody>' +
+            data.data.map(function (arg) {
+                return "<tr>" +
+                  arg.map(function (b) {
+                      return "<td>" + b + "</td>";
+                    }).join('') + "</tr>";
+              }).join('') +
+            '</tbody></table>'
+          );
+        $("#MyFlights tbody td").addClass('ctr');
+	$("#FlightsTable").tablesorter();
+      }
+    }
+
+    function logged_in(user) {
+      $("#cur_username").html(user);
+      ajax_request({ req: "list_flights" }, flight_data);
+    }
+    function setup_functions() {
+      $("#status_info").html("Initializing...");
+      $(".status_info").show();
+
+      $("#logout").click(function() {
+          ajax_request({ req: "logout" }, logout_data);
+        });
+      setTimeout(initialize, 200);
+    }
+    $(document).ready(function(){ setup_functions(); })
+  </script>
+</head>
+<body>
+<h1>ASC5ENA Trajectory Review</h1>
+<div id="Review">
+</div>
+<div id="LoginFlights">
+  <div id="Login">
+    <div class="Ainputs status_info wait_confirm" id="status_info"></div>
+    <table class="Ainputs logged_out logged_in create_acct reset_pw">
+      <tr class="Ainputs logged_in">
+	<th>user:</th>
+	<td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+    </table>
+    <p id="Begin" class="Ainputs logged_in"><a href="traj.html">Begin</a></p>
+  </div>
+  <div id="MyFlights"></div>
+</div>
+</body>
+</html>

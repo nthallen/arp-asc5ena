@@ -104,6 +104,7 @@
             data.cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
             '</tr></thead><tbody>' +
             data.data.map(function (arg) {
+		arg[0] = "<a href=\"javascript:select_flight(" + arg[0] + ")\">" + arg[0] + "</a>";
                 return "<tr>" +
                   arg.map(function (b) {
                       return "<td>" + b + "</td>";
@@ -114,6 +115,11 @@
         $("#MyFlights tbody td").addClass('ctr');
 	$("#FlightsTable").tablesorter();
       }
+    }
+    function select_flight(FlightID) {
+      localStorage.FlightID = FlightID;
+      window.location.href = hosthtml + "/review.html";
+      return false;
     }
 
     function logged_in(user) {
