@@ -7,6 +7,7 @@
   <script src="local.js" type="application/javascript"></script>
   <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
   <script src="jquery.tablesorter.js" type="application/javascript"></script>
+  <script src="flights.js" type="application/javascript"></script>
   <style type="text/css">
     .Ainputs { display: none }
     a.Ainputs { margin-right: 5px }
@@ -93,28 +94,6 @@
         "<p>A confirmation message has been sent." +
         "Please check your email now in order to complete your registration.</p>");
       $(".wait_confirm").show();
-    }
-    function flight_data(data) {
-      if (data.status.match(/^success: flights listed/i)) {
-        $("#MyFlights").empty();
-        $("#MyFlights").html(
-	    '<h3>My Flights</h3>\n' +
-            '<table id="FlightsTable" class="tablesorter"><thead>' +
-            '<tr>' +
-            data.cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
-            '</tr></thead><tbody>' +
-            data.data.map(function (arg) {
-		arg[0] = "<a href=\"javascript:select_flight(" + arg[0] + ")\">" + arg[0] + "</a>";
-                return "<tr>" +
-                  arg.map(function (b) {
-                      return "<td>" + b + "</td>";
-                    }).join('') + "</tr>";
-              }).join('') +
-            '</tbody></table>'
-          );
-        $("#MyFlights tbody td").addClass('ctr');
-	$("#FlightsTable").tablesorter();
-      }
     }
     function select_flight(FlightID) {
       localStorage.FlightID = FlightID;
@@ -226,27 +205,27 @@
     <div class="Ainputs status_info wait_confirm" id="status_info"></div>
     <form>
       <table class="Ainputs logged_out logged_in create_acct reset_pw">
-	<tr class="Ainputs logged_in">
-	  <th>user:</th>
-	  <td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
-	<tr class="Ainputs create_acct logged_out">
-	  <th>username:</th>
-	  <td><input id="username" name="username" type="text"></td></tr>
-	<tr class="Ainputs logged_out">
-	  <th>password:</th>
-	  <td><input id="password" name="password" type="password"></td></tr>
-	<tr class="Ainputs create_acct">
-	  <th>Full Name:</th>
-	  <td><input id="fullname" name="fullname" type="text"></td></tr>
-	<tr class="Ainputs create_acct reset_pw">
-	  <th>Email:</th>
-	  <td><input id="email" name="email" type="text"></td></tr>
-	<tr>
-	  <td colspan="2" class="request">
-	    <input class="Ainputs logged_out" type="button" id="login" value="Login">
-	    <input class="Ainputs create_acct" type="button" id="create" value="Create">
-	    <input class="Ainputs reset_pw" type="button" id="pwreset" value="Send Reset Email">
-	  </td></tr>
+        <tr class="Ainputs logged_in">
+          <th>user:</th>
+          <td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+        <tr class="Ainputs create_acct logged_out">
+          <th>username:</th>
+          <td><input id="username" name="username" type="text"></td></tr>
+        <tr class="Ainputs logged_out">
+          <th>password:</th>
+          <td><input id="password" name="password" type="password"></td></tr>
+        <tr class="Ainputs create_acct">
+          <th>Full Name:</th>
+          <td><input id="fullname" name="fullname" type="text"></td></tr>
+        <tr class="Ainputs create_acct reset_pw">
+          <th>Email:</th>
+          <td><input id="email" name="email" type="text"></td></tr>
+        <tr>
+          <td colspan="2" class="request">
+            <input class="Ainputs logged_out" type="button" id="login" value="Login">
+            <input class="Ainputs create_acct" type="button" id="create" value="Create">
+            <input class="Ainputs reset_pw" type="button" id="pwreset" value="Send Reset Email">
+          </td></tr>
       </table>
       <a class="Ainputs logged_out" id="create_acct" href="#">create a new account</a>
       <a class="Ainputs logged_out" href="#" id="forgot_passwd">forgot password</a>

@@ -78,12 +78,12 @@
             '</table>'
           );
         $("#MyFlights td, #MyFlights th").addClass('ctr');
-        if (localStorage.AccessCount) {
-          ++localStorage.AccessCount;
+        if (sessionStorage.AccessCount) {
+          ++sessionStorage.AccessCount;
         } else {
-          localStorage.AccessCount = 1;
+          sessionStorage.AccessCount = 1;
         }
-        $("#AccessCount").html(localStorage.AccessCount);
+        $("#AccessCount").html(sessionStorage.AccessCount);
     });
   </script>
 </head>

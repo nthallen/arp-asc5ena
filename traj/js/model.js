@@ -1,3 +1,13 @@
+/* This is the top level source file for traj.html */
+
+function setup_canvases() {
+  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
+  setup_thrust_canvas(200);
+  sequence_init([
+    { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
+    { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
+}
+
 function model_init() {
   var jqxhr = $.ajax( "/cgi-bin/model_initialize", { dataType: "json" } )
     .done(function(data, textstatus, jqXHR) {

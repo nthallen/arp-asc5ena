@@ -183,3 +183,42 @@ function Model_Wind( pos, model ) {
 
   return { status: 1, u: u, v: v };
 }
+
+var minWindFieldSpacing = 40; // pixels
+var normalWindSpeed = 10; // m/s to match latitude grid spacing
+var wind_field = {
+  ra: new Array,
+  pos: new trajectory_rec()
+};
+
+function draw_wind_field() {
+  // We will scale winds so normalWindSpeed matches one latitude grid
+  var NwindScale = (minWindFieldSpacing/YScale)/normalWindSpeed; // deg Lat per m/s
+  var EwindScale = NwindScale * YScale / XScale; // deg Lon per m/s
+  var redraw = wind_field.ra.length > 0 ? 1 : 0;
+  var x, y, i = 0;
+  for (x = -minWindFieldSpacing/2; x < xdim + minWindFieldSpacing/2; x += minWindFieldSpacing) {
+    var lon = x/XScale + minLon;
+    for (y = -minWindFieldSpacing/2; y < ydim + minWindFieldSpacing/2; y += minWindFieldSpacing) {
+      var lat = maxLat - y/YScale;
+      wind_field.pos.longitude = lon;
+      wind_field.pos.latitude = lat;
+      wind_field.pos.armtime = cur_state.armtime;
+      var wind = Model_Wind(wind_field.pos, cur_model);
+      var lon1 = lon + wind.u*EwindScale;
+      var lat1 = lat + wind.v*NwindScale;
+      var ps = 'M' + map_scale(lon, lat) + "L" + map_scale(lon1, lat1);
+      if (redraw) {
+        if (i >= wind_field.ra.length) {
+          alert('wind_field.ra length changed unexpectedly');
+          return;
+        }
+        wind_field.ra[i++].attr({ path: ps });
+      } else {
+        wind_field.ra.push(
+          paper.path(ps).attr({ fill: "none", stroke: "#F00",
+            "stroke-width": 1, "arrow-end": "classic-wide-long"}).show());
+      }
+    }
+  }
+}
