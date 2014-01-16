@@ -1,5 +1,9 @@
 var cur_sequence = { curstep: 0, seq: [], executed: 0 };
 
+function set_status(text) {
+  $("#Status").text(text);
+}
+
 function sequence_init(seq) {
   cur_sequence.seq = seq;
   cur_sequence.curstep = 0;

@@ -232,11 +232,6 @@ function draw_wind_field() {
 }
 
 function draw_trajectory() {
-  // console.log("draw_trajectory");
-  // if (ra_traj) {
-  //  ra_traj.remove();
-  //  ra_traj = null;
-  // }
   var tr = cur_model.trajectory;
   var i = tr.length-1, j = 0;
   if (i > 0) {
@@ -263,13 +258,6 @@ function polar_vector_path(scale, rho, theta) {
 }
 
 function draw_thrust_plot() {
-  // Note: If I renamed SC_State's cur_armtime member to armtime,
-  // I could initialize this with cur_state, or even pass cur_state
-  // to Model_Wind directly.
-  // var temp_pos = new trajectory_rec();
-  // temp_pos.longitude = cur_state.longitude;
-  // temp_pos.latitude = cur_state.latitude;
-  // temp_pos.armtime = cur_state.armtime;
   th_wind = Model_Wind(cur_state, cur_model);
   var wind_speed = Math.sqrt(th_wind.u*th_wind.u + th_wind.v*th_wind.v);
   var wind_dir = Math.atan2(th_wind.u,th_wind.v) * 180/Math.PI;
@@ -344,10 +332,6 @@ function draw_thrust_vector() {
   }
 }
 
-function set_status(text) {
-  $("#Status").text(text);
-}
-
 function setup_canvases() {
   xdim = $(window).width() - 480;
   ydim = $(window).height() - 50;
@@ -370,23 +354,3 @@ function setup_canvases() {
     { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
     { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
 }
-
-function draw_all() {
-  sequence_init([
-      { Status: "Initializing Range from map", Function: init_scale_from_map },
-      { Status: "Drawing map ...", Function: draw_map },
-      { Status: "Drawing wind field ...", Function: draw_wind_field }
-    ]);
-}
-
-//      $( "#canvas" ).on( "click", function( event ) {
-//        var $this = $( this );
-//        //console.log( "event object:" );
-//        //console.dir( event );
-//        //console.log( "canvas:" );
-//        //console.dir( $this.offset() );
-//        var Xoff = event.pageX - $this.offset().left;
-//        var Yoff = event.pageY - $this.offset().top;
-//        $("#Xval").text(Xoff.toFixed(0));
-//        $("#Yval").text(Yoff.toFixed(0));
-//        });
