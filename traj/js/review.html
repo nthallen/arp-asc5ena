@@ -14,9 +14,18 @@
   <script src="sequence.js" type="application/javascript"></script>
   <script src="review.js" type="application/javascript"></script>
   <style type="text/css">
+    h1 {
+      margin-top: 4px;
+      margin-bottom: 0px;
+    }
     h2, h3 {
       color: #0088FF;
     }
+    #UserID {
+      margin-top: 0px;
+      font-size: smaller;
+    }
+    #fullname { color: #0088FF }
     #Review {
       float: left;
     }
@@ -41,12 +50,12 @@
 <div id="LoginFlights">
   <h1>ASC5ENA Trajectory Review</h1>
   <div id="Login">
-    <div id="Status"></div>
-    <table id="UserInfo">
+    <table id="UserID">
       <tr><th>user:</th>
-	<td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+	<td><span id="fullname"></span> <a href="#" id="logout">logout</a></td></tr>
       <tr><td colspan="2"><a href="traj.html">Start a new flight</a></td></tr>
     </table>
+    <p><b>Status:</b> <span id="Status"></span></p>
   </div>
   <div id="MyFlights"></div>
 </div>

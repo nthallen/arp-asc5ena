@@ -34,7 +34,7 @@ function initialize() {
 }
 function init_data(data) {
   if (data.status.match(/^success: logged_in/i)) {
-    $("#cur_username").html(data.fullname);
+    $("#fullname").html(data.fullname);
     sequence_exec();
   } else if (data.status.match(/^success: logged_out/i)) {
     // Redirect to home page
