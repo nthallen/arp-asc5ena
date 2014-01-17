@@ -24,21 +24,35 @@ function ajax_request(opts, always_func, fail_func) {
 }
 
 function initialize() {
+  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
   ajax_request({ req: "initialize" }, init_data);
-  setup_map_canvas();
-  init_scale_from_map();
-  draw_map();
+  set_map_redraw_seq([
+    { Status: "Drawing map ...", Function: draw_map },
+    { Status: "Drawing trajectory ...", Function: draw_trajectory },
+    { Status: "Draw current position ...", Function: draw_current_position }
+  ]);
 }
 function init_data(data) {
   if (data.status.match(/^success: logged_in/i)) {
-    $("#cur_username").html(user);
-    ajax_request({ req: "list_flights" }, flight_data);
+    $("#cur_username").html(data.fullname);
+    sequence_exec();
   } else if (data.status.match(/^success: logged_out/i)) {
     // Redirect to home page
     window.location.href = hosthtml + "/";
   } else {
     alert('Unknown status from set password: ' + data.status);
   }
+}
+function list_flights() {
+  ajax_request({ req: "list_flights" }, rev_flight_data);
+}
+function rev_flight_data(data) {
+  flight_data(data);
+  sequence_exec();
+}
+function select_flight(FlightID) {
+  $("#FlightsTable tbody tr").removeClass('selected');
+  $("#Flt" + FlightID).addClass('selected');
 }
 
 function logout_data(data) {
@@ -51,12 +65,21 @@ function logout_data(data) {
   }
 }
 
-function setup_functions() {
-  $("#status_info").html("Initializing...");
-  $(".status_info").show();
+function init_flight() {
+  if (localStorage.FlightID) {
+    select_flight(localStorage.FlightID);
+  }
+}
 
+function setup_functions() {
   $("#logout").click(function() {
       ajax_request({ req: "logout" }, logout_data);
     });
-  setTimeout(initialize, 200);
+  sequence_init([
+      { Status: "Initializing...", Function: initialize, Async: 1 },
+      { Status: "Retrieving flight list...", Function: list_flights, Async: 1 },
+      { Status: "Initializing map scale...", Function: init_scale_from_map },
+      { Status: "Drawing map...", Function: draw_map },
+      { Status: "Initializing flight...", Function: init_flight }
+    ]);
 }

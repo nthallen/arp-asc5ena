@@ -1,6 +1,12 @@
 /* This is the top level source file for traj.html */
 
 function setup_canvases() {
+  set_map_redraw_seq([
+    { Status: "Drawing map ...", Function: draw_map },
+    { Status: "Drawing wind field ...", Function: redraw_wind_field },
+    { Status: "Drawing trajectory ...", Function: draw_trajectory },
+    { Status: "Draw current position ...", Function: draw_current_position }
+  ]);
   setup_map_canvas($(window).width() - 480, $(window).height() - 50);
   setup_thrust_canvas(200);
   sequence_init([
@@ -223,7 +229,7 @@ function flight_init() {
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
       { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
-      { Status: "Drawing wind field ...", Function: draw_wind_field },
+      { Status: "Drawing wind field ...", Function: redraw_wind_field },
       { Status: "Drawing current position ...", Function: draw_current_position },
       { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
       { Status: "Enable Step", Function: run_enable }

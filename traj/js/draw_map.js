@@ -113,13 +113,21 @@ function draw_current_position() {
   }
 }
 
+var map_redraw_seq = [
+  { Status: "Drawing map ...", Function: draw_map }
+];
+
+function set_map_redraw_seq(new_seq) {
+  map_redraw_seq = new_seq;
+}
+
+
 function draw_map() {
   var i, j;
   paper.clear();
   ra_traj = false;
   ra_pos = false;
   ra_start = false;
-  wind_field.ra.length = 0;
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
@@ -182,12 +190,7 @@ function draw_map() {
       minLat = maxLat - (rubbery+rubberdy)/YScale;
       maxLat = MLat;
       init_scale();
-      sequence_init([
-        { Status: "Drawing map ...", Function: draw_map },
-        { Status: "Drawing wind field ...", Function: draw_wind_field },
-        { Status: "Drawing trajectory ...", Function: draw_trajectory },
-        { Status: "Draw current position ...", Function: draw_current_position }
-        ]);
+      sequence_init(map_redraw_seq);
     }
   });
 }

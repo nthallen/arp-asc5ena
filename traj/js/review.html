@@ -4,10 +4,14 @@
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <title>ASC5ENA Trajectory Simulator</title>
   <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
-  <script src="local.js" type="application/javascript"></script>
+  <script src="raphael.js" type="application/javascript"></script>
   <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
   <script src="jquery.tablesorter.js" type="application/javascript"></script>
+  <script src="local.js" type="application/javascript"></script>
   <script src="flights.js" type="application/javascript"></script>
+  <script src="USMap.js" type="application/javascript"></script>
+  <script src="draw_map.js" type="application/javascript"></script>
+  <script src="sequence.js" type="application/javascript"></script>
   <script src="review.js" type="application/javascript"></script>
   <style type="text/css">
     h2, h3 {
@@ -16,26 +20,33 @@
     #Review {
       float: left;
     }
+    #canvas {
+      margin: 0px 15px;
+      float: left;
+    }
+    #LoginFlights { float: left }
     #MyFlights h3 { margin-bottom: 0px }
     #logout { font-size: smaller }
+    #FlightsTable tbody td { background-color: white }
+    #FlightsTable tbody tr.selected td { background-color: #00CCFF }
   </style>
   <script>
     $(document).ready(function(){ setup_functions(); })
   </script>
 </head>
 <body>
-<h1>ASC5ENA Trajectory Review</h1>
 <div id="Review">
+  <div id="canvas"></div>
 </div>
 <div id="LoginFlights">
+  <h1>ASC5ENA Trajectory Review</h1>
   <div id="Login">
-    <div class="Ainputs status_info wait_confirm" id="status_info"></div>
-    <table class="Ainputs logged_out logged_in create_acct reset_pw">
-      <tr class="Ainputs logged_in">
-	<th>user:</th>
+    <div id="Status"></div>
+    <table id="UserInfo">
+      <tr><th>user:</th>
 	<td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+      <tr><td colspan="2"><a href="traj.html">Start a new flight</a></td></tr>
     </table>
-    <p id="Begin" class="Ainputs logged_in"><a href="traj.html">Begin</a></p>
   </div>
   <div id="MyFlights"></div>
 </div>

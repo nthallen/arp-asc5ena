@@ -13,9 +13,10 @@ function flight_data(data) {
         data.cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
         '</tr></thead><tbody>' +
         data.data.map(function (arg) {
-            arg[0] = "<a href=\"javascript:select_flight(" + arg[0] +
-                      ")\">" + arg[0] + "</a>";
-            return "<tr>" +
+	    var FlightID = arg[0];
+            arg[0] = "<a href=\"javascript:select_flight(" + FlightID +
+                      ")\">" + FlightID + "</a>";
+            return '<tr id="Flt' + FlightID + '">' +
               arg.map(function (b) {
                   return "<td>" + b + "</td>";
                 }).join('') + "</tr>";

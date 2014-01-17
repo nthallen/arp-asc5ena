@@ -191,6 +191,11 @@ var wind_field = {
   pos: new trajectory_rec()
 };
 
+function redraw_wind_field() {
+  wind_field.ra.length = 0;
+  draw_wind_field();
+}
+
 function draw_wind_field() {
   // We will scale winds so normalWindSpeed matches one latitude grid
   var NwindScale = (minWindFieldSpacing/YScale)/normalWindSpeed; // deg Lat per m/s
