@@ -289,7 +289,7 @@ sub main {
           Surplus_Energy, Battery_Energy
           FROM Trajectory
           WHERE FlightID = ?
-          ORDER BY TrajID INC', {}, $FlightID);
+          ORDER BY TrajID', {}, $FlightID);
         $rv{"__NUM__traj"} = $traj;
         $status = "Success: Trajectory Included";
       } else {
@@ -320,13 +320,13 @@ sub json_dump {
   if (ref($out) ) {
     if (ref($out) eq 'ARRAY') {
       $rv = "[$I2" .
-        join(",$I2", map(json_dump($_,$I2), @$out)) .
+        join(",$I2", map(json_dump($_, $I2, $noquote), @$out)) .
         "$I1]";
     } elsif (ref($out) eq 'HASH') {
       $rv = "{$I2" .
         join(",$I2",
-          map { $_ =~ m/^((?:__NUM__)?)(.*)$/; '"' . $2 . '": '
-            json_dump($out->{$_}, $I2, $1) },
+          map { $_ =~ m/^((?:__NUM__)?)(.*)$/; '"' . $2 . '": ' .
+            json_dump($out->{$_}, $I2, $1) }
             keys %$out) .
           "$I1}";
     } else {
