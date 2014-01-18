@@ -50,9 +50,12 @@ function select_flight(FlightID) {
   $("#Flt" + FlightID).addClass('selected');
   ajax_request({ req: "flight_traj", FlightID: FlightID}, traj_data);
 }
+function draw_full_trajectory() {
+  draw_trajectory(1);
+}
 
 var cur_model;
-var cur_state = SC_State();
+var cur_state = new SC_State();
 
 function traj_data(data) {
   var FlightID = data.FlightID;
@@ -66,7 +69,7 @@ function traj_data(data) {
     battery_capacity: 0,
     model_timestep: 0
   };
-  data.data.map(function (row) {
+  data.traj.map(function (row) {
     var trec = new trajectory_rec();
     for (var i = 0; i < data.cols.length; ++i) {
       var attr = data.cols[i];
@@ -80,10 +83,13 @@ function traj_data(data) {
   cur_state.armtime = lrec.armtime;
   set_map_redraw_seq([
     { Status: "Drawing map ...", Function: draw_map },
-    { Status: "Drawing trajectory ...", Function: draw_trajectory },
+    { Status: "Drawing trajectory ...", Function: draw_full_trajectory },
     { Status: "Draw current position ...", Function: draw_current_position }
   ]);
-  sequence_exec();
+  sequence_init([
+    { Status: "Drawing trajectory ...", Function: draw_full_trajectory },
+    { Status: "Draw current position ...", Function: draw_current_position }
+  ]);
 }
 
 function logout_data(data) {
@@ -104,15 +110,13 @@ function init_flight() {
 
 function setup_functions() {
   $("#logout").click(function() {
-      ajax_request({ req: "logout" }, logout_data);
-    });
+    ajax_request({ req: "logout" }, logout_data);
+  });
   sequence_init([
-      { Status: "Initializing...", Function: initialize, Async: 1 },
-      { Status: "Retrieving flight list...", Function: list_flights, Async: 1 },
-      { Status: "Initializing map scale...", Function: init_scale_from_map },
-      { Status: "Drawing map...", Function: draw_map },
-      { Status: "Initializing flight...", Function: init_flight },
-      { Status: "Drawing trajectory ...", Function: draw_trajectory },
-      { Status: "Draw current position ...", Function: draw_current_position }
-    ]);
+    { Status: "Initializing...", Function: initialize, Async: 1 },
+    { Status: "Retrieving flight list...", Function: list_flights, Async: 1 },
+    { Status: "Initializing map scale...", Function: init_scale_from_map },
+    { Status: "Drawing map...", Function: draw_map },
+    { Status: "Initializing flight...", Function: init_flight, Async: 1 }
+  ]);
 }

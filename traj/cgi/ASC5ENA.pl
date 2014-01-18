@@ -292,6 +292,8 @@ sub main {
           ORDER BY TrajID', {}, $FlightID);
         $rv{"FlightID"} = $FlightID;
         $rv{"__NUM__traj"} = $traj;
+	$rv{cols} =
+	  [ qw(armtime Latitude Longitude Thrust Orientation Surplus_Energy Battery_Energy) ];
         $status = "Success: Trajectory Included";
       } else {
         $status = "Failure: Invalid FlightID";

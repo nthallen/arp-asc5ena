@@ -213,5 +213,7 @@ function draw_trajectory(all) {
         paper.path(ps).attr({ fill: "none", stroke: "#0F0",
           "stroke-width": 1}).show();
     }
+  } else if (ra_traj) {
+    ra_traj.attr({ path: '' });
   }
 }
