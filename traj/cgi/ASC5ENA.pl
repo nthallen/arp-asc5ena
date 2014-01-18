@@ -275,18 +275,45 @@ sub main {
     } else {
       $status = "Failure: Invalid authentication";
     }
+  } elsif ($req eq 'flight_traj') {
+    my $UserID = get_userID($dbh);
+    if ($UserID) {
+      my $FlightID = $cgi->param('FlightID');
+      my ($Model) = $dbh->selectrow_array(
+        'SELECT Model FROM Flight
+         WHERE UserID = ? AND FlightID = ?', {},
+         $UserID, $FlightID);
+      if ($Model) {
+        my $traj = $dbh->selectall_arrayref(
+          'SELECT armtime, Latitude, Longitude, Thrust, Orientation,
+          Surplus_Energy, Battery_Energy
+          FROM Trajectory
+          WHERE FlightID = ?
+          ORDER BY TrajID INC', {}, $FlightID);
+        $rv{"__NUM__traj"} = $traj;
+        $status = "Success: Trajectory Included";
+      } else {
+        $status = "Failure: Invalid FlightID";
+      }
+    } else {
+      $status = "Failure: Invalid authentication";
+    }
   }
   $rv{status} = $status;
   
   print $cgi->header(%header), json_dump(\%rv, "\n");
 }
 
-# $json = json_dump($obj, $indent);
+# $json = json_dump($obj, $indent, $noquote);
 # $obj at the top level should be a hash ref
 # $indent: "\n" for formatted output
 #  '' or undef for compact output
+# If all values are numeric, set $noquote to true
+# If a hash key is prefixed with __NUM__, the prefix
+# will be stripped, and all scalar children will be treated as
+# numeric (no quotes)
 sub json_dump {
-  my ($out, $I1) = @_;
+  my ($out, $I1, $noquote) = @_;
   my $rv;
   $I1 ||= '';
   my $I2 = $I1 ? "$I1  " : '';
@@ -298,13 +325,15 @@ sub json_dump {
     } elsif (ref($out) eq 'HASH') {
       $rv = "{$I2" .
         join(",$I2",
-          map( '"' . $_ . '": ' .
-            json_dump($out->{$_}, $I2),
-            keys %$out)) .
+          map { $_ =~ m/^((?:__NUM__)?)(.*)$/; '"' . $2 . '": '
+            json_dump($out->{$_}, $I2, $1) },
+            keys %$out) .
           "$I1}";
     } else {
       $rv = '"<unknown>"';
     }
+  } elsif ($noquote) {
+    $rv = $out;
   } else {
     $rv = '"' . $out . '"';
   }

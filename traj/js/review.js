@@ -53,6 +53,9 @@ function rev_flight_data(data) {
 function select_flight(FlightID) {
   $("#FlightsTable tbody tr").removeClass('selected');
   $("#Flt" + FlightID).addClass('selected');
+  ajax_request({ req: "flight_traj", FlightID: FlightID}, traj_data);
+}
+function traj_data(data) {
 }
 
 function logout_data(data) {
