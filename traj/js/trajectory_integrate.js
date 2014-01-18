@@ -1,6 +1,4 @@
 // This is what gets recorded in the trajectory record
-// Note that within Trajectory_Integrate(), I am using trajectory_recs
-// although I do not need thrust and orientation.
 function trajectory_rec(cur_state) {
   switch (arguments.length) {
     case 0:
@@ -199,7 +197,7 @@ function Trajectory_Integrate() {
       //  Do the integration according to the Runge-Kutta rule. 
 
       dpos.longitude = u * ( dt * 86400 ) /
-	( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
+        ( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
       dpos.latitude = v * ( dt * 86400 ) / ( Re ) * 180/Math.PI;
       dpos.armtime = dt;
 

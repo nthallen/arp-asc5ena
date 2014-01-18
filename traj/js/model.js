@@ -292,8 +292,8 @@ function flight_step2() {
   } else {
     sequence_init([
         { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
-	{ Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
-	{ Status: "Update table ...", Function: update_table },
+        { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+        { Status: "Update table ...", Function: update_table },
         { Status: "Checking for completion ...", Function: flight_step3, Async: 1 }
       ]);
   }

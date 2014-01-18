@@ -290,6 +290,7 @@ sub main {
           FROM Trajectory
           WHERE FlightID = ?
           ORDER BY TrajID', {}, $FlightID);
+        $rv{"FlightID"} = $FlightID;
         $rv{"__NUM__traj"} = $traj;
         $status = "Success: Trajectory Included";
       } else {

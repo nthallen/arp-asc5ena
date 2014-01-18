@@ -26,11 +26,6 @@ function ajax_request(opts, always_func, fail_func) {
 function initialize() {
   setup_map_canvas($(window).width() - 480, $(window).height() - 50);
   ajax_request({ req: "initialize" }, init_data);
-  set_map_redraw_seq([
-    { Status: "Drawing map ...", Function: draw_map },
-    { Status: "Drawing trajectory ...", Function: draw_trajectory },
-    { Status: "Draw current position ...", Function: draw_current_position }
-  ]);
 }
 function init_data(data) {
   if (data.status.match(/^success: logged_in/i)) {
@@ -55,7 +50,40 @@ function select_flight(FlightID) {
   $("#Flt" + FlightID).addClass('selected');
   ajax_request({ req: "flight_traj", FlightID: FlightID}, traj_data);
 }
+
+var cur_model;
+var cur_state = SC_State();
+
 function traj_data(data) {
+  var FlightID = data.FlightID;
+  var frec = cur_flight_list[FlightID];
+  cur_model = {
+    trajectory: [],
+    armtimes: [], winds: [],
+    model_name: frec.Model,
+    pressure: frec.Level,
+    FlightID: FlightID,
+    battery_capacity: 0,
+    model_timestep: 0
+  };
+  data.data.map(function (row) {
+    var trec = new trajectory_rec();
+    for (var i = 0; i < data.cols.length; ++i) {
+      var attr = data.cols[i];
+      trec[attr.toLowerCase()] = row[i];
+    }
+    cur_model.trajectory.push(trec);
+  });
+  var lrec = cur_model.trajectory[cur_model.trajectory.length - 1];
+  cur_state.latitude = lrec.latitude;
+  cur_state.longitude = lrec.longitude;
+  cur_state.armtime = lrec.armtime;
+  set_map_redraw_seq([
+    { Status: "Drawing map ...", Function: draw_map },
+    { Status: "Drawing trajectory ...", Function: draw_trajectory },
+    { Status: "Draw current position ...", Function: draw_current_position }
+  ]);
+  sequence_exec();
 }
 
 function logout_data(data) {
@@ -83,6 +111,8 @@ function setup_functions() {
       { Status: "Retrieving flight list...", Function: list_flights, Async: 1 },
       { Status: "Initializing map scale...", Function: init_scale_from_map },
       { Status: "Drawing map...", Function: draw_map },
-      { Status: "Initializing flight...", Function: init_flight }
+      { Status: "Initializing flight...", Function: init_flight },
+      { Status: "Drawing trajectory ...", Function: draw_trajectory },
+      { Status: "Draw current position ...", Function: draw_current_position }
     ]);
 }
