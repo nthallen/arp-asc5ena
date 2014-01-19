@@ -1,0 +1,6 @@
+#! /bin/bash
+./dbinit >~/trajectory.log <<EOF
+SELECT FlightID, armtime, Latitude, Longitude, Thrust, Orientation
+FROM Trajectory
+EOF
+echo Output written to ~/trajectory.log

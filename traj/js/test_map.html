@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <title>ASC5ENA Javascript Tester</title>
+  <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
+  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+  <style type="text/css">
+  </style>
+  
+  <script type="application/javascript">
+    $(document).ready(function(){
+        var cols = [ "FlightID", "Start", "Model", "Level", "Days" ];
+        var data = [
+          [
+            "4",
+            "2001-05-01",
+            "era-interim",
+            "60",
+            "25.250"
+          ],
+          [
+            "7",
+            "2003-05-01",
+            "era-interim",
+            "60",
+            "3.500"
+          ],
+          [
+            "12",
+            "2005-05-01",
+            "era-interim",
+            "60",
+            "14.000"
+          ],
+          [
+            "18",
+            "2006-05-01",
+            "era-interim",
+            "60",
+            "14.500"
+          ],
+          [
+            "46",
+            "2001-05-01",
+            "era-interim",
+            "60",
+            "8.833"
+          ],
+          [
+            "47",
+            "2010-05-01",
+            "era-interim",
+            "60",
+            "3.375"
+          ],
+          [
+            "48",
+            "2010-05-01",
+            "era-interim",
+            "60",
+            "14.542"
+          ]
+        ];
+
+        $("#MyFlights").empty();
+        $("#MyFlights").html(
+            '<table class="model_params">' +
+            '<tr>' +
+            cols.map(function (arg) { return "<th>" + arg + "</th>"; }).join('') +
+            '</tr>' +
+            data.map(function (arg) {
+                return "<tr>" +
+                  arg.map(function (b) {
+                      return "<td>" + b + "</td>";
+                    }).join('') + "</tr>";
+              }).join('') +
+            '</table>'
+          );
+        $("#MyFlights td, #MyFlights th").addClass('ctr');
+        if (sessionStorage.AccessCount) {
+          ++sessionStorage.AccessCount;
+        } else {
+          sessionStorage.AccessCount = 1;
+        }
+        $("#AccessCount").html(sessionStorage.AccessCount);
+    });
+  </script>
+</head>
+<body>
+<h1>ASC5ENA Javascript Tester</h1>
+<div id="MyFlights"></div>
+<p>I have accessed this page <span id="AccessCount">0</span> times.</p>
+</body>
+</html>

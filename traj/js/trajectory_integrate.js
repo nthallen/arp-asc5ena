@@ -1,6 +1,4 @@
 // This is what gets recorded in the trajectory record
-// Note that within Trajectory_Integrate(), I am using trajectory_recs
-// although I do not need thrust and orientation.
 function trajectory_rec(cur_state) {
   switch (arguments.length) {
     case 0:
@@ -11,7 +9,7 @@ function trajectory_rec(cur_state) {
       this.orientation = 0.0;
       this.solazi = 0.0;
       this.solele = 0.0;
-      this.battery_charge = 0.0;
+      this.battery_energy = 0.0;
       this.surplus_energy = 0.0;
       break;
     case 1:
@@ -22,7 +20,7 @@ function trajectory_rec(cur_state) {
       this.orientation = cur_state.orientation;
       this.solazi = cur_state.solazi;
       this.solele = cur_state.solele;
-      this.battery_charge = cur_state.battery_charge;
+      this.battery_energy = cur_state.battery_energy;
       this.surplus_energy = cur_state.surplus_energy;
       break;
     default:
@@ -48,7 +46,7 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.orientation = 0;
       this.solazi = 0.0;
       this.solele = 0.0;
-      this.battery_charge = 0.0;
+      this.battery_energy = 0.0;
       this.surplus_energy = 0.0;
       this.solar_power = 0.0;
       this.drive_power = 0.0;
@@ -63,7 +61,7 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.orientation = lat.orientation;
       this.solazi = lat.solazi;
       this.solele = lat.solele;
-      this.battery_charge = lat.battery_charge;
+      this.battery_energy = lat.battery_energy;
       this.surplus_energy = lat.surplus_energy;
       this.solar_power = lat.solar_power;
       this.drive_power = lat.drive_power;
@@ -80,7 +78,7 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
       this.stop_armtime = this.end_armtime;
       this.solazi = 0.0;
       this.solele = 0.0;
-      this.battery_charge = 0.0;
+      this.battery_energy = 0.0;
       this.surplus_energy = 0.0;
       this.solar_power = 0.0;
       this.drive_power = 0.0;
@@ -143,7 +141,7 @@ function Trajectory_Integrate() {
     // Calculate drive power
     var thrust = cur_state.thrust;
     cur_state.drive_power = calc_power_from_velocity(cur_state.thrust);
-    if (cur_state.solar_power < cur_state.drive_power && cur_state.battery_charge <= 0) {
+    if (cur_state.solar_power < cur_state.drive_power && cur_state.battery_energy <= 0) {
       thrust = 0;
       cur_state.drive_power = 0;
     }
@@ -199,7 +197,7 @@ function Trajectory_Integrate() {
       //  Do the integration according to the Runge-Kutta rule. 
 
       dpos.longitude = u * ( dt * 86400 ) /
-	( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
+        ( Re * Math.cos( cur_state.latitude * Math.PI/180 ) ) * 180/Math.PI;
       dpos.latitude = v * ( dt * 86400 ) / ( Re ) * 180/Math.PI;
       dpos.armtime = dt;
 
@@ -231,13 +229,13 @@ function Trajectory_Integrate() {
     calc_solar_power(cur_state);
     var net_energy = (0.5 * (solar_power0 + cur_state.solar_power) -
       cur_state.drive_power) * dt * 24;
-    cur_state.battery_charge += net_energy;
-    if (cur_state.battery_charge < 0) {
-      cur_state.surplus_energy += cur_state.battery_charge;
-      cur_state.battery_charge = 0;
-    } else if (cur_state.battery_charge > cur_model.battery_capacity) {
-      cur_state.surplus_energy += cur_state.battery_charge - cur_model.battery_capacity;
-      cur_state.battery_charge = cur_model.battery_capacity;
+    cur_state.battery_energy += net_energy;
+    if (cur_state.battery_energy < 0) {
+      cur_state.surplus_energy += cur_state.battery_energy;
+      cur_state.battery_energy = 0;
+    } else if (cur_state.battery_energy > cur_model.battery_capacity) {
+      cur_state.surplus_energy += cur_state.battery_energy - cur_model.battery_capacity;
+      cur_state.battery_energy = cur_model.battery_capacity;
     } else {
       cur_state.surplus_energy = 0;
     }

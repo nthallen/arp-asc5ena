@@ -3,6 +3,7 @@
 <head>
  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
  <title>ASC5ENA Simulator</title>
+ <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
  <script src="raphael.js" type="application/javascript"></script>
  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
  <style type="text/css">
@@ -30,20 +31,6 @@
       margin-right: 5px;
     }
     #run_model_step { }
-    .model_params {
-      margin: 5px;
-      font-size: smaller;
-    }
-    .model_params th { text-align: right }
-    .model_params th, .model_params td {
-      border: 1px solid black;
-      padding: 4px;
-      background-color: #CCCCFF;
-    }
-    .model_params input, .model_params select {
-      background-color: #AAAAFF;
-    }
-    .ctr, .model_params th.ctr { text-align: center }
     #map_dimensions {
       clear: left;
       float: left;
@@ -57,6 +44,7 @@
   <script src="local.js" type="application/javascript"></script>
   <script src="trajectory_integrate.js" type="application/javascript"></script>
   <script src="draw_map.js" type="application/javascript"></script>
+  <script src="thrust_plot.js" type="application/javascript"></script>
   <script src="sequence.js" type="application/javascript"></script>
   <script src="model_wind.js" type="application/javascript"></script>
   <script src="model.js" type="application/javascript"></script>

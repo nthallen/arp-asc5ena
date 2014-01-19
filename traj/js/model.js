@@ -1,3 +1,19 @@
+/* This is the top level source file for traj.html */
+
+function setup_canvases() {
+  set_map_redraw_seq([
+    { Status: "Drawing map ...", Function: draw_map },
+    { Status: "Drawing wind field ...", Function: redraw_wind_field },
+    { Status: "Drawing trajectory ...", Function: draw_trajectory },
+    { Status: "Draw current position ...", Function: draw_current_position }
+  ]);
+  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
+  setup_thrust_canvas(200);
+  sequence_init([
+    { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
+    { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
+}
+
 function model_init() {
   var jqxhr = $.ajax( "/cgi-bin/model_initialize", { dataType: "json" } )
     .done(function(data, textstatus, jqXHR) {
@@ -114,7 +130,7 @@ function update_table() {
     format_hm(date.getUTCMinutes()));
   $("#SolAzi").html(cur_state.solazi.toFixed(1));
   $("#SolEle").html(cur_state.solele.toFixed(1));
-  var charge = cur_state.battery_charge/1000;
+  var charge = cur_state.battery_energy/1000;
   var surplus = '';
   if (cur_state.surplus_energy != 0) {
     surplus = " [";
@@ -187,7 +203,7 @@ function flight_init() {
   var stepsize = $("#run_step").val()/24;
   // validate stepsize as all numbers
   cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
-  cur_state.battery_charge = 23740; // Should be from cur_model
+  cur_state.battery_energy = 23740; // Should be from cur_model
   $("#run_model").html(models.fullnames[mn]);
   $("#run_pressure").html(fl.toFixed(0) + " hPa");
   $("#run_model_step").click(function () { flight_step(); });
@@ -204,7 +220,7 @@ function flight_init() {
     model_name: models.names[mn],
     pressure: fl,
     FlightID: 0,
-    battery_capacity: cur_state.battery_charge,
+    battery_capacity: cur_state.battery_energy,
     model_timestep: models.timesteps[mn]
   };
   sequence_init([
@@ -213,7 +229,7 @@ function flight_init() {
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
       { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
-      { Status: "Drawing wind field ...", Function: draw_wind_field },
+      { Status: "Drawing wind field ...", Function: redraw_wind_field },
       { Status: "Drawing current position ...", Function: draw_current_position },
       { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
       { Status: "Enable Step", Function: run_enable }
@@ -257,7 +273,7 @@ function record_trajectory() {
       Longitude: cur_state.longitude.toFixed(4),
       Thrust: cur_state.thrust.toFixed(3),
       Orientation: cur_state.orientation.toFixed(4),
-      Battery_Energy: cur_state.battery_charge.toFixed(1),
+      Battery_Energy: cur_state.battery_energy.toFixed(1),
       Surplus_Energy: cur_state.surplus_energy.toFixed(1)
     }, record_traj_data);
 }
@@ -276,8 +292,8 @@ function flight_step2() {
   } else {
     sequence_init([
         { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
-	{ Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
-	{ Status: "Update table ...", Function: update_table },
+        { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+        { Status: "Update table ...", Function: update_table },
         { Status: "Checking for completion ...", Function: flight_step3, Async: 1 }
       ]);
   }

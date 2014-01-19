@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <title>ASC5ENA Trajectory Simulator</title>
+  <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
+  <script src="raphael.js" type="application/javascript"></script>
+  <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+  <script src="jquery.tablesorter.js" type="application/javascript"></script>
+  <script src="jquery.flot.min.js" type="application/javascript"></script>
+  <script src="local.js" type="application/javascript"></script>
+  <script src="flights.js" type="application/javascript"></script>
+  <script src="USMap.js" type="application/javascript"></script>
+  <script src="draw_map.js" type="application/javascript"></script>
+  <script src="trajectory_integrate.js" type="application/javascript"></script>
+  <script src="sequence.js" type="application/javascript"></script>
+  <script src="review.js" type="application/javascript"></script>
+  <style type="text/css">
+    h1 {
+      margin-top: 4px;
+      margin-bottom: 0px;
+    }
+    h2, h3 {
+      color: #0088FF;
+    }
+    #UserID {
+      margin-top: 0px;
+      font-size: smaller;
+    }
+    #UserID th, #UserID td {
+      vertical-align: top
+    }
+    #fullname { color: #0088FF }
+    #NavOpts { text-align: right; padding-left: 20px }
+    #Review {
+      float: left;
+    }
+    #canvas, #plot {
+      margin: 0px 15px;
+    }
+    #LoginFlights { float: left }
+    #MyFlights h3 { margin-bottom: 0px }
+    #logout { font-size: smaller }
+    #FlightsTable tbody td { background-color: white }
+    #FlightsTable tbody tr.selected td { background-color: #00CCFF }
+  </style>
+  <script>
+    $(document).ready(function(){ setup_functions(); })
+  </script>
+</head>
+<body>
+<div id="Review">
+  <div id="canvas"></div>
+  <div id="plot"></div>
+</div>
+<div id="LoginFlights">
+  <h1>ASC5ENA Trajectory Review</h1>
+  <div id="Login">
+    <table id="UserID">
+      <tr><th>user:</th>
+	<td><span id="fullname"></span></td>
+	  <td id="NavOpts">
+	    <a href="index.html">Home</a><br>
+	    <a href="traj.html">Start a new flight</a><br>
+	    <a href="#" id="logout">logout</a>
+	  </td></tr>
+    </table>
+    <p><b>Status:</b> <span id="Status"></span></p>
+  </div>
+  <div id="MyFlights"></div>
+</div>
+</body>
+</html>

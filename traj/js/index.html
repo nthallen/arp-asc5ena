@@ -3,11 +3,18 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <title>ASC5ENA Trajectory Simulator</title>
+  <link type="text/css" rel="stylesheet" href="ASC5ENA.css">
   <script src="local.js" type="application/javascript"></script>
   <script src="jquery-1.7.1.min.js" type="application/javascript"></script>
+  <script src="jquery.tablesorter.js" type="application/javascript"></script>
+  <script src="flights.js" type="application/javascript"></script>
   <style type="text/css">
     .Ainputs { display: none }
     a.Ainputs { margin-right: 5px }
+    h2, h3 {
+      color: #0088FF;
+    }
+    #MyFlights h3 { margin-bottom: 0px }
     #logout { font-size: smaller }
     .request { text-align: center }
     #Instructions {
@@ -17,15 +24,16 @@
       margin-right: 10px;
       background-color: #CCCCCC;
     }
-    #Login {
-      padding: 10px;
+    #LoginFlights {
       margin-right: 10px;
-      background-color: #CCCCFF;
       float: left;
     }
+    #Login {
+      padding: 10px;
+      background-color: #CCCCFF;
+    }
     #Begin {
-      background-color: cyan;
-      padding: 4px;
+      margin: 0px;
     }
   </style>
   <script>
@@ -35,7 +43,7 @@
         fail_function = fail_func;
       }
       if ( ! ajaxpl ) {
-	alert('ajaxpl is undefined in ajax_request');
+        alert('ajaxpl is undefined in ajax_request');
       }
       $.ajax( ajaxpl, { data: opts, dataType: "json" } )
         .fail(function() {
@@ -84,14 +92,20 @@
       $(".Ainputs").hide();
       $("#status_info").html(
         "<p>A confirmation message has been sent." +
-	"Please check your email now in order to complete your registration.</p>");
+        "Please check your email now in order to complete your registration.</p>");
       $(".wait_confirm").show();
+    }
+    function select_flight(FlightID) {
+      localStorage.FlightID = FlightID;
+      window.location.href = hosthtml + "/review.html";
+      return false;
     }
 
     function logged_in(user) {
       $(".Ainputs").hide();
       $("#cur_username").html(user);
       $(".logged_in").show();
+      ajax_request({ req: "list_flights" }, flight_data);
     }
     function logged_out() {
       $(".Ainputs").hide();
@@ -186,38 +200,41 @@
   flights and see how your power usage compares to the solar
   power generated, among other things, so stay tuned.</p>
 </div>
-<div id="Login">
-  <div class="Ainputs status_info wait_confirm" id="status_info"></div>
-  <form>
-    <table class="Ainputs logged_out logged_in create_acct reset_pw">
-      <tr class="Ainputs logged_in">
-        <th>user:</th>
-        <td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
-      <tr class="Ainputs create_acct logged_out">
-        <th>username:</th>
-        <td><input id="username" name="username" type="text"></td></tr>
-      <tr class="Ainputs logged_out">
-        <th>password:</th>
-        <td><input id="password" name="password" type="password"></td></tr>
-      <tr class="Ainputs create_acct">
-        <th>Full Name:</th>
-        <td><input id="fullname" name="fullname" type="text"></td></tr>
-      <tr class="Ainputs create_acct reset_pw">
-        <th>Email:</th>
-        <td><input id="email" name="email" type="text"></td></tr>
-      <tr>
-        <td colspan="2" class="request">
-          <input class="Ainputs logged_out" type="button" id="login" value="Login">
-          <input class="Ainputs create_acct" type="button" id="create" value="Create">
-          <input class="Ainputs reset_pw" type="button" id="pwreset" value="Send Reset Email">
-        </td></tr>
-    </table>
-    <a class="Ainputs logged_out" id="create_acct" href="#">create a new account</a>
-    <a class="Ainputs logged_out" href="#" id="forgot_passwd">forgot password</a>
-    <a class="Ainputs create_acct reset_pw wait_confirm" id="existing_user" href="#">login as existing user</a>
-    <a class="Ainputs logged_out create_acct reset_pw wait_confirm" id="guest_acct" href="#">run as guest</a>
-  </form>
-  <p id="#Begin" class="Ainputs logged_in"><a href="traj.html">Begin</a></p>
+<div id="LoginFlights">
+  <div id="Login">
+    <div class="Ainputs status_info wait_confirm" id="status_info"></div>
+    <form>
+      <table class="Ainputs logged_out logged_in create_acct reset_pw">
+        <tr class="Ainputs logged_in">
+          <th>user:</th>
+          <td><span id="cur_username"></span> <a href="#" id="logout">logout</a></td></tr>
+        <tr class="Ainputs create_acct logged_out">
+          <th>username:</th>
+          <td><input id="username" name="username" type="text"></td></tr>
+        <tr class="Ainputs logged_out">
+          <th>password:</th>
+          <td><input id="password" name="password" type="password"></td></tr>
+        <tr class="Ainputs create_acct">
+          <th>Full Name:</th>
+          <td><input id="fullname" name="fullname" type="text"></td></tr>
+        <tr class="Ainputs create_acct reset_pw">
+          <th>Email:</th>
+          <td><input id="email" name="email" type="text"></td></tr>
+        <tr>
+          <td colspan="2" class="request">
+            <input class="Ainputs logged_out" type="button" id="login" value="Login">
+            <input class="Ainputs create_acct" type="button" id="create" value="Create">
+            <input class="Ainputs reset_pw" type="button" id="pwreset" value="Send Reset Email">
+          </td></tr>
+      </table>
+      <a class="Ainputs logged_out" id="create_acct" href="#">create a new account</a>
+      <a class="Ainputs logged_out" href="#" id="forgot_passwd">forgot password</a>
+      <a class="Ainputs create_acct reset_pw wait_confirm" id="existing_user" href="#">login as existing user</a>
+      <a class="Ainputs logged_out create_acct reset_pw wait_confirm" id="guest_acct" href="#">run as guest</a>
+    </form>
+    <p id="Begin" class="Ainputs logged_in"><a href="traj.html">Begin</a></p>
+  </div>
+  <div id="MyFlights"></div>
 </div>
 </body>
 </html>

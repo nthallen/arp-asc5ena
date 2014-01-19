@@ -1,31 +1,12 @@
 var xdim = 800;
 var ydim = 600;
-var thdim = 200;
-var minWindFieldSpacing = 40; // pixels
-var normalWindSpeed = 10; // m/s to match latitude grid spacing
 var pos_radius = 4; // radius of the circle marking current position
 var paper; // Raphael paper for main plot
 var ra_background; // Raphael object for main background rectangle
-var wind_field = {
-  ra: new Array,
-  pos: new trajectory_rec()
-};
 var ra_pos; // Current position object
 var ra_start; // Starting position object
 var ra_traj; // Trajectory path object
 var rubber, rubberx, rubbery, rubberdx, rubberdy;
-
-var thrust; // Raphael paper for thrust plot
-var thrust_bg; // Raphael rect for thrust background
-var th_scale; // pixels per m/s
-var th_wind; // wind structure
-var ra_th_wind; // wind vector
-var ra_th_thrust; // thrust vector
-var ra_th_net; // net vector
-var thrust_absmax = 8; // m/s
-var ra_th_absmax; // 8 m/s circle
-var thrust_max = 5; // m/s
-var ra_th_max; // 5 m/s circle
 
 var minLat = 360;
 var maxLat = -360;
@@ -33,6 +14,18 @@ var minLon = 360;
 var maxLon = -360;
 var nBorders = Map.length; // Map.length
 var XScale, YScale; // pixels per degree
+
+function setup_map_canvas(xd, yd) {
+  xdim = xd;
+  ydim = yd;
+  paper = Raphael("canvas", xdim, ydim);
+  paper.clear();
+  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
+  // $( "#zoomfull").click(function() {
+    // draw_all();
+    // return false;
+  // });
+}
 
 function init_scale_from_map() {
   var i;
@@ -120,13 +113,21 @@ function draw_current_position() {
   }
 }
 
+var map_redraw_seq = [
+  { Status: "Drawing map ...", Function: draw_map }
+];
+
+function set_map_redraw_seq(new_seq) {
+  map_redraw_seq = new_seq;
+}
+
+
 function draw_map() {
   var i, j;
   paper.clear();
   ra_traj = false;
   ra_pos = false;
   ra_start = false;
-  wind_field.ra.length = 0;
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
@@ -189,204 +190,30 @@ function draw_map() {
       minLat = maxLat - (rubbery+rubberdy)/YScale;
       maxLat = MLat;
       init_scale();
-      sequence_init([
-        { Status: "Drawing map ...", Function: draw_map },
-        { Status: "Drawing wind field ...", Function: draw_wind_field },
-        { Status: "Drawing trajectory ...", Function: draw_trajectory },
-        { Status: "Draw current position ...", Function: draw_current_position }
-        ]);
+      sequence_init(map_redraw_seq);
     }
   });
 }
 
-function draw_wind_field() {
-  // We will scale winds so normalWindSpeed matches one latitude grid
-  var NwindScale = (minWindFieldSpacing/YScale)/normalWindSpeed; // deg Lat per m/s
-  var EwindScale = NwindScale * YScale / XScale; // deg Lon per m/s
-  var redraw = wind_field.ra.length > 0 ? 1 : 0;
-  var x, y, i = 0;
-  for (x = -minWindFieldSpacing/2; x < xdim + minWindFieldSpacing/2; x += minWindFieldSpacing) {
-    var lon = x/XScale + minLon;
-    for (y = -minWindFieldSpacing/2; y < ydim + minWindFieldSpacing/2; y += minWindFieldSpacing) {
-      var lat = maxLat - y/YScale;
-      wind_field.pos.longitude = lon;
-      wind_field.pos.latitude = lat;
-      wind_field.pos.armtime = cur_state.armtime;
-      var wind = Model_Wind(wind_field.pos, cur_model);
-      var lon1 = lon + wind.u*EwindScale;
-      var lat1 = lat + wind.v*NwindScale;
-      var ps = 'M' + map_scale(lon, lat) + "L" + map_scale(lon1, lat1);
-      if (redraw) {
-        if (i >= wind_field.ra.length) {
-          alert('wind_field.ra length changed unexpectedly');
-          return;
-        }
-        wind_field.ra[i++].attr({ path: ps });
-      } else {
-        wind_field.ra.push(
-          paper.path(ps).attr({ fill: "none", stroke: "#F00",
-            "stroke-width": 1, "arrow-end": "classic-wide-long"}).show());
-      }
-    }
+function draw_trajectory(all) {
+  if (arguments.length == 0) {
+    all = 0;
   }
-}
-
-function draw_trajectory() {
-  // console.log("draw_trajectory");
-  // if (ra_traj) {
-  //  ra_traj.remove();
-  //  ra_traj = null;
-  // }
   var tr = cur_model.trajectory;
   var i = tr.length-1, j = 0;
-  if (i > 0) {
+  if (i > 1) {
     var ps = 'M' + map_scale(tr[i].longitude, tr[i].latitude);
-    for (i--; i > 0 && ++j < 48; --i) {
+    for (i--; i >= 0 && (all || ++j < 48); --i) {
       ps = ps + 'L' + map_scale(tr[i].longitude, tr[i].latitude);
     }
     if (ra_traj) {
       ra_traj.attr({ path: ps });
     } else {
       ra_traj =
-	paper.path(ps).attr({ fill: "none", stroke: "#0F0",
-	  "stroke-width": 1}).show();
+        paper.path(ps).attr({ fill: "none", stroke: "#0F0",
+          "stroke-width": 1}).show();
     }
+  } else if (ra_traj) {
+    ra_traj.attr({ path: '' });
   }
 }
-
-function polar_vector_path(scale, rho, theta) {
-  var x = thdim/2 + rho * scale * Math.sin(theta * Math.PI/180);
-  var y = thdim/2 - rho * scale * Math.cos(theta * Math.PI/180);
-  var ps = "M" + thdim/2 + "," + thdim/2 +
-    "L" + x.toFixed(0) + "," + y.toFixed(0);
-  return ps;
-}
-
-function draw_thrust_plot() {
-  // Note: If I renamed SC_State's cur_armtime member to armtime,
-  // I could initialize this with cur_state, or even pass cur_state
-  // to Model_Wind directly.
-  // var temp_pos = new trajectory_rec();
-  // temp_pos.longitude = cur_state.longitude;
-  // temp_pos.latitude = cur_state.latitude;
-  // temp_pos.armtime = cur_state.armtime;
-  th_wind = Model_Wind(cur_state, cur_model);
-  var wind_speed = Math.sqrt(th_wind.u*th_wind.u + th_wind.v*th_wind.v);
-  var wind_dir = Math.atan2(th_wind.u,th_wind.v) * 180/Math.PI;
-  $("#wind_speed").html(wind_speed.toFixed(2) + " m/s");
-  $("#wind_dir").html(wind_dir.toFixed(0) + "<sup>o</sup>");
-  var wind_max = Math.max(Math.max(Math.abs(th_wind.u),Math.abs(th_wind.v)), thrust_absmax);
-  th_scale = thdim/(2*wind_max);
-  var ps = polar_vector_path(th_scale, wind_speed, wind_dir);
-  if (ra_th_wind) {
-    ra_th_wind.attr({ path: ps});
-  } else {
-    ra_th_wind = thrust.path(ps).attr({ fill: "none", stroke: "#F00",
-              "stroke-width": 1, "arrow-end": "classic-wide-long"}).show();
-  }
-  if (ra_th_absmax) {
-    ra_th_absmax.attr({ r: thrust_absmax * th_scale });
-  } else {
-    ra_th_absmax = thrust.circle(thdim/2, thdim/2, thrust_absmax * th_scale)
-      .attr({ fill: "none", stroke: "#f00", "stroke_width": 1}).show();
-  }
-  if (ra_th_max) {
-    ra_th_max.attr({ r: thrust_max * th_scale });
-  } else {
-    ra_th_max = thrust.circle(thdim/2, thdim/2, thrust_max * th_scale)
-      .attr({ fill: "none", stroke: "#0f0", "stroke_width": 1}).show();
-  }
-  draw_thrust_vector();
-}
-
-function thrust_event(event) {
-  var th = $("#thrust");
-  var u = (event.pageX - th.offset().left - thdim/2) / th_scale;
-  var v = -(event.pageY - th.offset().top - thdim/2) / th_scale;
-  var drive_dir = Math.atan2(u,v) * 180/Math.PI;
-  var drive_speed = Math.sqrt(u*u + v*v);
-  if (drive_speed > thrust_absmax) {
-    drive_speed = thrust_absmax;
-    u = drive_speed * Math.sin(drive_dir * Math.PI/180);
-    v = drive_speed * Math.cos(drive_dir * Math.PI/180);
-  }
-  cur_state.thrust = drive_speed;
-  cur_state.orientation = drive_dir;
-  draw_thrust_vector();
-  cur_state.drive_power = calc_power_from_velocity(cur_state.thrust);
-  var dp = cur_state.drive_power/1000;
-  $("#drive_power").html(dp.toFixed(1) + " KW");
-}
-
-function draw_thrust_vector() {
-// var ra_th_net; // net vector
-  $("#drive_speed").html(cur_state.thrust.toFixed(2) + " m/s");
-  $("#drive_dir").html(cur_state.orientation.toFixed(0) + "<sup>o</sup>");
-  ps = polar_vector_path(th_scale, cur_state.thrust, cur_state.orientation);
-  if (ra_th_thrust) {
-    ra_th_thrust.attr({ path: ps});
-  } else {
-    ra_th_thrust = thrust.path(ps).attr({ fill: "none", stroke: "#0f0",
-              "stroke-width": 1, "arrow-end": "classic-wide-long"}).show();
-  }
-  var net_u = th_wind.u + cur_state.thrust * Math.sin(cur_state.orientation * Math.PI/180);
-  var net_v = th_wind.v + cur_state.thrust * Math.cos(cur_state.orientation * Math.PI/180);
-  var net_speed = Math.sqrt(net_u*net_u+net_v*net_v);
-  var net_dir = Math.atan2(net_u, net_v) * 180/Math.PI;
-  $("#net_speed").html(net_speed.toFixed(2) + " m/s");
-  $("#net_dir").html(net_dir.toFixed(0) + "<sup>o</sup>");
-  ps = polar_vector_path(th_scale, net_speed, net_dir);
-  if (ra_th_net) {
-    ra_th_net.attr({ path: ps});
-  } else {
-    ra_th_net = thrust.path(ps).attr({ fill: "none", stroke: "yellow",
-              "stroke-width": 1, "arrow-end": "classic-wide-long"}).show();
-  }
-}
-
-function set_status(text) {
-  $("#Status").text(text);
-}
-
-function setup_canvases() {
-  xdim = $(window).width() - 480;
-  ydim = $(window).height() - 50;
-  // console.log('(xdim,ydim) = (' + xdim + ',' + ydim + ')');
-  paper = Raphael("canvas", xdim, ydim);
-  paper.clear();
-  ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
-  $( "#zoomfull").click(function() {
-    draw_all();
-    return false;
-  });
-  thrust = Raphael("thrust", thdim, thdim);
-  $("#thrust").click(function (event) { thrust_event(event); });
-  thrust_bg = thrust.rect(0, 0, thdim, thdim, 5).attr({fill: "#000", stroke: "none"});
-  thrust_bg.drag(
-    function(dx,dy,x,y,event) { thrust_event(event); },// move handler
-    function(x,y,event) { thrust_event(event); },
-    function(event) {});
-  sequence_init([
-    { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
-    { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
-}
-
-function draw_all() {
-  sequence_init([
-      { Status: "Initializing Range from map", Function: init_scale_from_map },
-      { Status: "Drawing map ...", Function: draw_map },
-      { Status: "Drawing wind field ...", Function: draw_wind_field }
-    ]);
-}
-
-//      $( "#canvas" ).on( "click", function( event ) {
-//        var $this = $( this );
-//        //console.log( "event object:" );
-//        //console.dir( event );
-//        //console.log( "canvas:" );
-//        //console.dir( $this.offset() );
-//        var Xoff = event.pageX - $this.offset().left;
-//        var Yoff = event.pageY - $this.offset().top;
-//        $("#Xval").text(Xoff.toFixed(0));
-//        $("#Yval").text(Yoff.toFixed(0));
-//        });
