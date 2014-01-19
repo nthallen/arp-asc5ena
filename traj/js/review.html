@@ -32,7 +32,7 @@
       vertical-align: top
     }
     #fullname { color: #0088FF }
-    #NavOpts { text-align: right; padding-left: 20px }
+    .NavOpts { text-align: right; padding-left: 20px }
     #Review {
       float: left;
     }
@@ -61,10 +61,12 @@
     <table id="UserID">
       <tr><th>user:</th>
 	<td><span id="fullname"></span></td>
-	  <td id="NavOpts">
-	    <a href="index.html">Home</a><br>
-	    <a href="traj.html">Start a new flight</a><br>
-	    <a href="#" id="logout">logout</a>
+	<td class="NavOpts">
+	    <a href="#" id="logout">logout</a></td></tr>
+      <tr><td colspan="3" class="NavOpts">
+	    <a href="index.html">Home</a></td></tr>
+      <tr><td colspan="3" class="NavOpts">
+	    <a href="traj.html">Start a new flight</a>
 	  </td></tr>
     </table>
     <p><b>Status:</b> <span id="Status"></span></p>
