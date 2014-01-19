@@ -27,14 +27,17 @@
       margin-top: 0px;
       font-size: smaller;
     }
+    #UserID th, #UserID td {
+      vertical-align: top
+    }
     #fullname { color: #0088FF }
+    #NavOpts { text-align: right; padding-left: 20px }
     #Review {
       float: left;
     }
-    #canvas {
+    #canvas, #plot {
       margin: 0px 15px;
     }
-    #plot { height: 200px }
     #LoginFlights { float: left }
     #MyFlights h3 { margin-bottom: 0px }
     #logout { font-size: smaller }
@@ -55,8 +58,12 @@
   <div id="Login">
     <table id="UserID">
       <tr><th>user:</th>
-	<td><span id="fullname"></span> <a href="#" id="logout">logout</a></td></tr>
-      <tr><td colspan="2"><a href="traj.html">Start a new flight</a></td></tr>
+	<td><span id="fullname"></span></td>
+	  <td id="NavOpts">
+	    <a href="index.html">Home</a><br>
+	    <a href="traj.html">Start a new flight</a><br>
+	    <a href="#" id="logout">logout</a>
+	  </td></tr>
     </table>
     <p><b>Status:</b> <span id="Status"></span></p>
   </div>

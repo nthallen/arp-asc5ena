@@ -201,9 +201,9 @@ function draw_trajectory(all) {
   }
   var tr = cur_model.trajectory;
   var i = tr.length-1, j = 0;
-  if (i > 0) {
+  if (i > 1) {
     var ps = 'M' + map_scale(tr[i].longitude, tr[i].latitude);
-    for (i--; i > 0 && (all || ++j < 48); --i) {
+    for (i--; i >= 0 && (all || ++j < 48); --i) {
       ps = ps + 'L' + map_scale(tr[i].longitude, tr[i].latitude);
     }
     if (ra_traj) {

@@ -58,17 +58,30 @@ function draw_power_plot() {
   var surp = [];
   var has_power = 0;
   var t0 = cur_model.trajectory[0].armtime;
+  var in_surplus = 0;
   cur_model.trajectory.map(function (trec) {
     if (trec.battery_energy != 0) {
       has_power = 1;
     }
-    batt.push([trec.armtime-t0, trec.battery_energy]);
-    surp.push([trec.armtime-t0, trec.surplus_energy]);
+    batt.push([trec.armtime-t0, trec.battery_energy/1000]);
+    if (trec.surplus_energy > 0) {
+      if (!in_surplus) {
+	surp.push([trec.armtime-t0, trec.battery_energy/1000]);
+	in_surplus = 1;
+      }
+      surp.push([trec.armtime-t0, (trec.battery_energy+trec.surplus_energy)/1000]);
+    } else if (in_surplus) {
+      surp.push(null);
+      in_surplus = 0;
+    }
   });
   if (has_power) {
-    $.plot($("#plot"), [batt, surp]);
+    $("#plot").empty();
+    $("#plot").plot([{ label: 'Surplus KWH', data: surp, color: 'red' },
+		     { label: 'Battery KWH', data: batt, color: 'blue' }]);
   } else {
     $("#plot").empty();
+    $("#plot").html('<p>*Simulation occurred before power monitoring was implemented.</p>');
   }
 }
 
