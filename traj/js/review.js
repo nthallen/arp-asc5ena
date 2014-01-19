@@ -54,6 +54,25 @@ function draw_full_trajectory() {
   draw_trajectory(1);
 }
 
+function draw_power_plot() {
+  var batt = [];
+  var surp = [];
+  var has_power = 0;
+  var t0 = cur_model.trajectory[0].armtime;
+  for (var trec in cur_model.trajectory) {
+    if (trec.battery_charge != 0) {
+      has_power = 1;
+    }
+    batt.push([trec.armtime-t0, trec.battery_charge]);
+    surp.push([trec.armtime-t0, trec.surplus_energy]);
+  }
+  if (has_power) {
+    $.plot($("#plot"), [batt, surp]);
+  } else {
+    $("#plot").clear();
+  }
+}
+
 var cur_model;
 var cur_state = new SC_State();
 
@@ -109,6 +128,8 @@ function init_flight() {
 }
 
 function setup_functions() {
+  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
+  $("#plot").width($(window).width() - 480);
   $("#logout").click(function() {
     ajax_request({ req: "logout" }, logout_data);
   });
