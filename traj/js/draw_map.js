@@ -58,13 +58,8 @@ function init_scale() {
     minLon = meanLon - dLon/2;
     maxLon = meanLon + dLon/2;
   }
-  $("#minLat").val(minLat.toFixed(4));
-  $("#maxLat").val(maxLat.toFixed(4));
-  $("#minLon").val(minLon.toFixed(4));
-  $("#maxLon").val(maxLon.toFixed(4));
   XScale = xdim/(maxLon - minLon);
   YScale = ydim/(maxLat - minLat);
-  // alert("minLat: " + minLat + " maxLat: " + maxLat + " minLon: " + minLon + " maxLon: " + maxLon);
 }
 
 function update_scale() {
@@ -142,6 +137,10 @@ function draw_map() {
         "stroke-width": 2}).show;
     }
   }
+  paper.text(xdim-20, ydim-40, '+').click(function() { zoom(0.75); })
+    .attr({fill: "#eee", stroke: "#eee", "font-size": 16, cursor: 'pointer'});
+  paper.text(xdim-20, ydim-20, '-').click(function() { zoom(4/3.); })
+    .attr({fill: "#eee", stroke: "#eee", "font-size": 16, cursor: 'pointer'});
   ra_background.drag( function(dx,dy,x,y,event) { // move handler
     if (!cur_state.busy) {
       x -= $("#canvas").offset().left;
@@ -193,6 +192,26 @@ function draw_map() {
       sequence_init(map_redraw_seq);
     }
   });
+}
+
+function zoom_scale(range, factor) {
+  var mean = (range[0] + range[1])/2;
+  var delta = factor * (range[1] - range[0])/2;
+  range[0] = mean - delta;
+  range[1] = mean + delta;
+}
+
+function zoom(factor) {
+  var range = [minLat, maxLat];
+  zoom_scale(range, factor);
+  minLat = range[0];
+  maxLat = range[1];
+  range = [minLon, maxLon];
+  zoom_scale(range, factor);
+  minLon = range[0];
+  maxLon = range[1];
+  init_scale();
+  sequence_init(map_redraw_seq);
 }
 
 function draw_trajectory(all) {
