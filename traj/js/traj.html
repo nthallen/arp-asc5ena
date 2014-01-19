@@ -15,7 +15,12 @@
       margin-top: 0px;
       font-size: smaller;
     }
+    #UserID th, #UserID td {
+      vertical-align: top
+    }
+    #NewFlight { display: none }
     #fullname { color: #0088FF }
+    .NavOpts { text-align: right; padding-left: 20px }
     #StatusLine {
       margin-top: 0.5em;
       margin-bottom: 0px;
@@ -57,7 +62,21 @@
 <body>
 <div id="canvas"></div>
 <h1>ASC5ENA Simulator</h1>
-<p id="UserID">User: <span id="fullname"></span> <span id="FlightID"></span></p>
+<table id="UserID">
+  <tr>
+    <th>User:</th>
+    <td><span id="fullname"></span></td>
+    <td class="NavOpts"> <a href="#" id="logout">logout</a></td></tr>
+  <tr>
+    <th>Flight:</th>
+    <td><span id="FlightID"></span></td>
+    <td class="NavOpts">
+	<a href="index.html">Home</a>
+      </td></tr>
+  <tr id="NewFlight"><td colspan="3" class="NavOpts">
+	<a href="traj.html">Start a new flight</a></td></tr>
+</table>
+
 <p id="StatusLine"><b>Status:</b> <span id="Status"></span></p>
 
 <form>

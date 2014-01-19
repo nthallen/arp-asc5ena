@@ -77,8 +77,12 @@ function draw_power_plot() {
   });
   if (has_power) {
     $("#plot").empty();
-    $("#plot").plot([{ label: 'Surplus KWH', data: surp, color: 'red' },
-		     { label: 'Battery KWH', data: batt, color: 'blue' }]);
+    $("#plot").plot(
+      [{ label: 'Surplus', data: surp, color: 'red' },
+       { label: 'Battery', data: batt, color: 'blue' }],
+      { xaxes: [{ axisLabel: 'Days', color: 'black' }],
+	yaxes: [{ axisLabel: 'KWH', color: 'black' }]
+      });
   } else {
     $("#plot").empty();
     $("#plot").html('<p>*Simulation occurred before power monitoring was implemented.</p>');
