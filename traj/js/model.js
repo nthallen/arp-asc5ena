@@ -150,11 +150,19 @@ function update_table() {
 function init_flight_db_data(data) {
   if (data.status.match(/^success/i)) {
     cur_model.FlightID = data.FlightID;
-    $("#FlightID").html(" FlightID: " + data.FlightID);
+    $("#FlightID").html(data.FlightID +
+	': <a href="javascript:Review()">Review</a>');
+    $("#NewFlight").show();
     sequence_exec(); // Allows login_init() to be used in a sequence
   } else {
     alert("Error initializing flight in database");
   }
+}
+
+function Review() {
+  localStorage.FlightID = cur_model.FlightID;
+  window.location.href = hosthtml + "/review.html";
+  return false;
 }
 
 function init_flight_db() {
