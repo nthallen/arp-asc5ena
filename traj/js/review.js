@@ -24,7 +24,6 @@ function ajax_request(opts, always_func, fail_func) {
 }
 
 function initialize() {
-  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
   ajax_request({ req: "initialize" }, init_data);
 }
 function init_data(data) {
@@ -59,17 +58,17 @@ function draw_power_plot() {
   var surp = [];
   var has_power = 0;
   var t0 = cur_model.trajectory[0].armtime;
-  for (var trec in cur_model.trajectory) {
-    if (trec.battery_charge != 0) {
+  cur_model.trajectory.map(function (trec) {
+    if (trec.battery_energy != 0) {
       has_power = 1;
     }
-    batt.push([trec.armtime-t0, trec.battery_charge]);
+    batt.push([trec.armtime-t0, trec.battery_energy]);
     surp.push([trec.armtime-t0, trec.surplus_energy]);
-  }
+  });
   if (has_power) {
     $.plot($("#plot"), [batt, surp]);
   } else {
-    $("#plot").clear();
+    $("#plot").empty();
   }
 }
 
@@ -107,7 +106,8 @@ function traj_data(data) {
   ]);
   sequence_init([
     { Status: "Drawing trajectory ...", Function: draw_full_trajectory },
-    { Status: "Draw current position ...", Function: draw_current_position }
+    { Status: "Draw current position ...", Function: draw_current_position },
+    { Status: "Drawing power plot ...", Function: draw_power_plot }
   ]);
 }
 
@@ -128,8 +128,10 @@ function init_flight() {
 }
 
 function setup_functions() {
-  setup_map_canvas($(window).width() - 480, $(window).height() - 50);
-  $("#plot").width($(window).width() - 480);
+  var w = $(window).width() - 480;
+  var ph = 200;
+  setup_map_canvas(w, $(window).height() - 50 - ph);
+  $("#plot").width(w).height(ph);
   $("#logout").click(function() {
     ajax_request({ req: "logout" }, logout_data);
   });
