@@ -5,6 +5,7 @@ var paper; // Raphael paper for main plot
 var ra_background; // Raphael object for main background rectangle
 var ra_pos; // Current position object
 var ra_start; // Starting position object
+var ra_landzone; // landing zone object
 var ra_traj; // Trajectory path object
 var rubber, rubberx, rubbery, rubberdx, rubberdy;
 
@@ -89,14 +90,19 @@ function map_scale(x, y) {
 
 function draw_current_position() {
   var x, y;
+  var start = cur_model.trajectory[0];
+  x = Math.round((start.longitude-minLon) * XScale);
+  y = Math.round((maxLat - start.latitude) * YScale);
   if (!ra_start) {
-    var start = cur_model.trajectory[0];
-    x = Math.round((start.longitude-minLon) * XScale);
-    y = Math.round((maxLat - start.latitude) * YScale);
     ra_start = paper.circle(x, y, pos_radius).attr({ fill: "#f00", stroke: "#0f0",
 	  "stroke-width": 1}).show();
   } else {
     ra_start.toFront();
+  }
+  var land_radius = (20/6378.0)*(180/Math.PI)*YScale;
+  if ((!ra_landzone) && (land_radius > pos_radius)) {
+    ra_landzone = paper.circle(x,y,land_radius)
+      .attr({ fill: 'none', stroke: 'yellow', stroke_width: 1}).show();
   }
   x = Math.round((cur_state.longitude-minLon) * XScale);
   y = Math.round((maxLat - cur_state.latitude) * YScale);
@@ -123,6 +129,7 @@ function draw_map() {
   ra_traj = false;
   ra_pos = false;
   ra_start = false;
+  ra_landzone = false;
   ra_background = paper.rect(0, 0, xdim, ydim, 10).attr({fill: "#000", stroke : "none"});
   for (i = 0; i < nBorders; ++i) {
     // Map[i].BoundingBox = [ mLon MLon mLat MLat ];
