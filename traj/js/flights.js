@@ -4,12 +4,12 @@
  * javascript:select_flight(n)
  */
 var cur_flight_list;
-var Username;
+var Username = 'undef';
 var ShowingAll = 0;
 
 function flight_data(data) {
-  if ( ! Username ) {
-    alert('Username undefined in flight_data()');
+  if ( Username == 'undef' ) {
+    alert('Username still "' + Username + '" in flight_data()');
     return;
   }
   if (data.status.match(/^success: flights listed/i)) {
@@ -67,4 +67,4 @@ function toggle_flights() {
   }
   // $("#MyFlights h3").click(toggle_flights);
   ShowingAll = !ShowingAll;
-};
+}

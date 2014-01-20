@@ -136,7 +136,8 @@ sub main {
       {}, $username, $password );
     if ( $UserID && $FullName ) {
       $status = "Success: logged_in";
-      $rv{user} = $FullName;
+      $rv{username} = $username;
+      $rv{fullname} = $FullName;
       $header{-cookie} = setup_session_key($dbh, $UserID);
     } else {
       $status = 'Failure: Invalid user or password';

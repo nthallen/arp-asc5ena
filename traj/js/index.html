@@ -65,8 +65,7 @@
     }
     function init_data(data) {
       if (data.status.match(/^success: logged_in/i)) {
-	Username = data.username;
-        logged_in(data.fullname);
+        logged_in(data);
       } else if (data.status.match(/^success: logged_out/i)) {
         logged_out();
       } else {
@@ -74,7 +73,7 @@
       }
     }
     function login_data(data) {
-      logged_in(data.user);
+      logged_in(data);
     }
     function login_fail_data(data) {
       alert(data.status);
@@ -101,9 +100,10 @@
       return false;
     }
 
-    function logged_in(user) {
+    function logged_in(data) {
+      Username = data.username
       $(".Ainputs").hide();
-      $("#cur_username").html(user);
+      $("#cur_username").html(data.fullname);
       $(".logged_in").show();
       ajax_request({ req: "list_flights" }, flight_data);
     }
