@@ -26,9 +26,11 @@ function ajax_request(opts, always_func, fail_func) {
 function initialize() {
   ajax_request({ req: "initialize" }, init_data);
 }
+
 function init_data(data) {
   if (data.status.match(/^success: logged_in/i)) {
     $("#fullname").html(data.fullname);
+    Username = data.username;
     sequence_exec();
   } else if (data.status.match(/^success: logged_out/i)) {
     // Redirect to home page
