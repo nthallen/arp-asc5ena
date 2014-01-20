@@ -91,33 +91,9 @@ function draw_power_plot() {
   }
 }
 
-var cur_model;
-var cur_state = new SC_State();
 
 function traj_data(data) {
-  var FlightID = data.FlightID;
-  var frec = cur_flight_list[FlightID];
-  cur_model = {
-    trajectory: [],
-    armtimes: [], winds: [],
-    model_name: frec.Model,
-    pressure: frec.Level,
-    FlightID: FlightID,
-    battery_capacity: 0,
-    model_timestep: 0
-  };
-  data.traj.map(function (row) {
-    var trec = new trajectory_rec();
-    for (var i = 0; i < data.cols.length; ++i) {
-      var attr = data.cols[i];
-      trec[attr.toLowerCase()] = row[i];
-    }
-    cur_model.trajectory.push(trec);
-  });
-  var lrec = cur_model.trajectory[cur_model.trajectory.length - 1];
-  cur_state.latitude = lrec.latitude;
-  cur_state.longitude = lrec.longitude;
-  cur_state.armtime = lrec.armtime;
+  load_trajectory(data);
   set_map_redraw_seq([
     { Status: "Drawing map ...", Function: draw_map },
     { Status: "Drawing trajectory ...", Function: draw_full_trajectory },

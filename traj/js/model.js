@@ -11,7 +11,10 @@ function setup_canvases() {
   setup_thrust_canvas(200);
   sequence_init([
     { Status: "Checking Credentials ...", Function: login_init, Async: 1 },
-    { Status: "Loading Models ...", Function: model_init, Async: 1 } ]);
+    { Status: "Loading Models ...", Function: model_init, Async: 1 },
+    { Status: "Checking for resumed flight ...",
+      Function: check_for_resumed_flight, Async: 1 }
+  ]);
 }
 
 function model_init() {
@@ -209,20 +212,6 @@ function flight_init() {
     alert('Pressure level outside available model range');
     return 0;
   }
-  var stepsize = $("#run_step").val()/24;
-  // validate stepsize as all numbers
-  cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
-  cur_state.battery_energy = 23740; // Should be from cur_model
-  $("#run_model").html(models.fullnames[mn]);
-  $("#run_pressure").html(fl.toFixed(0) + " hPa");
-  $("#run_model_step").click(function () { flight_step(); });
-  init_solar_model();
-  init_thrust_model();
-  calc_solar_power(cur_state);
-  update_table();
-  $("#model_init").hide();
-  $("#model_run").show();
-  run_disable();
   cur_model = {
     trajectory: [],
     armtimes: [], winds: [],
@@ -232,6 +221,11 @@ function flight_init() {
     battery_capacity: cur_state.battery_energy,
     model_timestep: models.timesteps[mn]
   };
+  var stepsize = $("#run_step").val()/24;
+  // validate stepsize as all numbers
+  cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
+  cur_state.battery_energy = default_battery_capacity;
+  init_run_display();
   sequence_init([
       { Status: "Initializing flight in database...", Function: init_flight_db, Async: 1 },
       { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
@@ -243,6 +237,19 @@ function flight_init() {
       { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
       { Status: "Enable Step", Function: run_enable }
     ]);
+}
+
+function init_run_display() {
+  $("#run_model").html(cur_model.model_name);
+  $("#run_pressure").html(cur_model.pressure.toFixed(0) + " hPa");
+  $("#run_model_step").click(function () { flight_step(); });
+  init_solar_model();
+  init_thrust_model();
+  calc_solar_power(cur_state);
+  update_table();
+  $("#model_init").hide();
+  $("#model_run").show();
+  run_disable();
 }
 
 function run_enable() {
@@ -329,4 +336,54 @@ function flight_step3() {
       { Status: "Enable Step", Function: run_enable }
     ]);
   }
+}
+
+function check_for_resumed_flight() {
+  if (localStorage.resumeFlightID) {
+    sequence_init([
+      { Status: "Retrieving Resumed Flight Data ...",
+        Function: get_resumed_flight_data,
+        Async: 1 },
+      { Status: "Retrieving resumed trajectory ...",
+        Function: get_resumed_trajectory,
+        Async: 1 },
+      { Status: "Retrieving resumedtra
+
+    ]);
+  } else {
+    sequence_exec();
+  }
+}
+
+function get_resumed_flight_data() {
+  db_request(
+    { req: "list_flights", FlightID: localStorage.resumeFlightID },
+    rev_flight_data);
+}
+function rev_flight_data(data) {
+  init_cur_flight_list(data);
+  if (cur_flight_list[localStorage.resumeFlightID].username == Username) {
+    sequence_exec();
+  } else {
+    alert('Unable to resume specified FlightID');
+    // Clear resumeFlightID?
+  }
+}
+
+function get_resumed_trajectory() {
+  db_request(
+    { req: "flight_traj", FlightID: localStorage.resumeFlightID},
+    rev_traj_data);
+}
+function rev_traj_data(data) {
+  load_trajectory(data);
+  sequence_init([
+    { Status: "Initializing Range from map", Function: init_scale_from_map },
+    { Status: "Drawing map ...", Function: draw_map },
+    { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
+    { Status: "Drawing wind field ...", Function: redraw_wind_field },
+    { Status: "Drawing current position ...", Function: draw_current_position },
+    { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
+    { Status: "Enable Step", Function: run_enable }
+  ]);
 }

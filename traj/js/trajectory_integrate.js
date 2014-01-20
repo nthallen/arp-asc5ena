@@ -89,6 +89,10 @@ function SC_State(lat, lon, cur_time, step, thrust, orientation) {
   }
 }
 
+var cur_model;
+var cur_state;
+var default_battery_capacity = 23740;
+
 function Trajectory_Integrate() {
   // console.log("Trajectory_Integrate()");
   //  This function integrates the balloon trajectory forward in time.

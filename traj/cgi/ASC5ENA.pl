@@ -108,16 +108,16 @@ sub main {
     if ( $UserID ) {
       my ($user, $username, $passhash, $confirmed) = $dbh->selectrow_array(
         'SELECT FullName, Username, Password, Confirmed FROM User
-	 WHERE UserID = ?', {}, $UserID);
+         WHERE UserID = ?', {}, $UserID);
       if (defined($user)) {
         if ($passhash ne '') {
           $status = 'Success: logged_in';
           $rv{fullname} = $user;
-	  $rv{username} = $username;
+          $rv{username} = $username;
         } elsif ($confirmed) {
           $status = "Success: logged_in ('$user' confirmed, no password)";
           $rv{fullname} = $user;
-	  $rv{username} = $username;
+          $rv{username} = $username;
         } else {
           $status = "Success: logged_out ('$user' unconfirmed)";
         }
@@ -262,11 +262,19 @@ sub main {
   } elsif ($req eq 'list_flights') {
     my $UserID = get_userID($dbh);
     if ($UserID) {
+      my $FlightID = $cgi->param('FlightID');
+      my @where_values;
+      my $where_clause = '';
+      if ( $FlightID ) {
+        $where_clause = 'WHERE FlightID = ? ';
+        push(@where_values, $FlightID);
+      }
       my $flights = $dbh->selectall_arrayref(
         'SELECT FlightID, Username, Model, Level, DATE(StartDate) AS Start,
-	   MAX(armtime) - MIN(armtime) as Days
-         FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
-         GROUP BY Flight.FlightID', {} );
+           MAX(armtime) - MIN(armtime) as Days
+         FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory ' .
+        $where_clause .
+        'GROUP BY Flight.FlightID', {}, @where_values );
       if ($flights && @$flights) {
         $status = "Success: Flights listed";
         $rv{cols} = [ qw(FlightID Username Model Level Start Days) ];
@@ -294,8 +302,8 @@ sub main {
           ORDER BY TrajID', {}, $FlightID);
         $rv{"FlightID"} = $FlightID;
         $rv{"__NUM__traj"} = $traj;
-	$rv{cols} =
-	  [ qw(armtime Latitude Longitude Thrust Orientation Surplus_Energy Battery_Energy) ];
+        $rv{cols} =
+          [ qw(armtime Latitude Longitude Thrust Orientation Surplus_Energy Battery_Energy) ];
         $status = "Success: Trajectory Included";
       # } else {
       #   $status = "Failure: Invalid FlightID";
