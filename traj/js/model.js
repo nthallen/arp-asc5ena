@@ -47,6 +47,7 @@ function login_init() {
 function init_data(data) {
   if (data.status.match(/^success: logged_in/i)) {
     $("#fullname").html(data.fullname);
+    Username = data.username;
     sequence_exec(); // Allows login_init() to be used in a sequence
   } else {
     alert("Credentials did not check out");

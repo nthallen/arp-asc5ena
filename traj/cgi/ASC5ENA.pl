@@ -106,16 +106,18 @@ sub main {
   if ($req eq 'initialize') {
     my $UserID = get_userID($dbh);
     if ( $UserID ) {
-      my ($user, $passhash, $confirmed) = $dbh->selectrow_array(
-        'SELECT FullName, Password, Confirmed FROM User
-          WHERE UserID = ?', {}, $UserID);
+      my ($user, $username, $passhash, $confirmed) = $dbh->selectrow_array(
+        'SELECT FullName, Username, Password, Confirmed FROM User
+	 WHERE UserID = ?', {}, $UserID);
       if (defined($user)) {
         if ($passhash ne '') {
           $status = 'Success: logged_in';
           $rv{fullname} = $user;
+	  $rv{username} = $username;
         } elsif ($confirmed) {
           $status = "Success: logged_in ('$user' confirmed, no password)";
           $rv{fullname} = $user;
+	  $rv{username} = $username;
         } else {
           $status = "Success: logged_out ('$user' unconfirmed)";
         }
@@ -260,14 +262,13 @@ sub main {
     my $UserID = get_userID($dbh);
     if ($UserID) {
       my $flights = $dbh->selectall_arrayref(
-        'SELECT FlightID, Model, Level, DATE(StartDate) AS Start,
+        'SELECT FlightID, Username, Model, Level, DATE(StartDate) AS Start,
 	   MAX(armtime) - MIN(armtime) as Days
          FROM Flight NATURAL JOIN User NATURAL JOIN Trajectory
-         WHERE UserID = ?
-         GROUP BY Flight.FlightID', {}, $UserID );
+         GROUP BY Flight.FlightID', {} );
       if ($flights && @$flights) {
         $status = "Success: Flights listed";
-        $rv{cols} = [ qw(FlightID Model Level Start Days) ];
+        $rv{cols} = [ qw(FlightID Username Model Level Start Days) ];
         $rv{data} = $flights;
       } else {
         $status = "Success: No Flights Listed";
@@ -279,11 +280,11 @@ sub main {
     my $UserID = get_userID($dbh);
     if ($UserID) {
       my $FlightID = $cgi->param('FlightID');
-      my ($Model) = $dbh->selectrow_array(
-        'SELECT Model FROM Flight
-         WHERE UserID = ? AND FlightID = ?', {},
-         $UserID, $FlightID);
-      if ($Model) {
+      # my ($Model) = $dbh->selectrow_array(
+      #   'SELECT Model FROM Flight
+      #    WHERE UserID = ? AND FlightID = ?', {},
+      #    $UserID, $FlightID);
+      # if ($Model) {
         my $traj = $dbh->selectall_arrayref(
           'SELECT armtime, Latitude, Longitude, Thrust, Orientation,
           Surplus_Energy, Battery_Energy
@@ -295,9 +296,9 @@ sub main {
 	$rv{cols} =
 	  [ qw(armtime Latitude Longitude Thrust Orientation Surplus_Energy Battery_Energy) ];
         $status = "Success: Trajectory Included";
-      } else {
-        $status = "Failure: Invalid FlightID";
-      }
+      # } else {
+      #   $status = "Failure: Invalid FlightID";
+      # }
     } else {
       $status = "Failure: Invalid authentication";
     }
