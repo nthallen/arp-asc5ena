@@ -101,7 +101,7 @@
     }
 
     function logged_in(data) {
-      Username = data.username
+      Username = data.username;
       $(".Ainputs").hide();
       $("#cur_username").html(data.fullname);
       $(".logged_in").show();
@@ -112,9 +112,11 @@
       $("#username").val("");
       $("#password").val("");
       $(".logged_out").show();
+      $("#MyFlights").hide();
     }
     function setup_functions() {
       $(".Ainputs").hide();
+      $("#status_info").html("Initializing...");
       $("#status_info").html("Initializing...");
       $(".status_info").show();
 
@@ -127,6 +129,7 @@
             username: $("#username").val(),
             password: $("#password").val()
           }, login_data, login_fail_data );
+	  return false;
         });
       $("#create_acct").click(function () {
           $(".Ainputs").hide();
@@ -212,7 +215,7 @@
           <th>username:</th>
           <td><input id="username" name="username" type="text"></td></tr>
         <tr class="Ainputs logged_out">
-          <th>password:</th>
+	  <th>password:</th>
           <td><input id="password" name="password" type="password"></td></tr>
         <tr class="Ainputs create_acct">
           <th>Full Name:</th>
@@ -222,7 +225,7 @@
           <td><input id="email" name="email" type="text"></td></tr>
         <tr>
           <td colspan="2" class="request">
-            <input class="Ainputs logged_out" type="button" id="login" value="Login">
+            <input class="Ainputs logged_out" type="submit" id="login" value="Login">
             <input class="Ainputs create_acct" type="button" id="create" value="Create">
             <input class="Ainputs reset_pw" type="button" id="pwreset" value="Send Reset Email">
           </td></tr>

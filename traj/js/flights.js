@@ -52,6 +52,7 @@ function flight_data(data) {
     $("#MyFlights tbody td").addClass('ctr');
     $("#FlightsTable").tablesorter();
     $("#MyFlights h3").click(toggle_flights);
+    $("#MyFlights").show();
   }
 }
 
