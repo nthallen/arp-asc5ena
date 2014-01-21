@@ -154,9 +154,6 @@ function update_table() {
 function init_flight_db_data(data) {
   if (data.status.match(/^success/i)) {
     cur_model.FlightID = data.FlightID;
-    $("#FlightID").html(data.FlightID +
-	': <a href="javascript:Review()">Review</a>');
-    $("#NewFlight").show();
     sequence_exec(); // Allows login_init() to be used in a sequence
   } else {
     alert("Error initializing flight in database");
@@ -218,16 +215,16 @@ function flight_init() {
     model_name: models.names[mn],
     pressure: fl,
     FlightID: 0,
-    battery_capacity: cur_state.battery_energy,
+    battery_capacity: default_battery_capacity,
     model_timestep: models.timesteps[mn]
   };
   var stepsize = $("#run_step").val()/24;
   // validate stepsize as all numbers
   cur_state = new SC_State(34+28/60, -(104+14.5/60), armtime, stepsize, 0, 0);
   cur_state.battery_energy = default_battery_capacity;
-  init_run_display();
   sequence_init([
       { Status: "Initializing flight in database...", Function: init_flight_db, Async: 1 },
+      { Status: "Initializing run display ...", Function: init_run_display },
       { Status: "Updating trajectory in database ...", Function: record_trajectory, Async: 1 },
       { Status: "Initializing Range from map", Function: init_scale_from_map },
       { Status: "Drawing map ...", Function: draw_map },
@@ -240,12 +237,16 @@ function flight_init() {
 }
 
 function init_run_display() {
+  $("#FlightID").html(cur_model.FlightID +
+      ': <a href="javascript:Review()">Review</a>');
+  $("#NewFlight").show();
   $("#run_model").html(cur_model.model_name);
   $("#run_pressure").html(cur_model.pressure.toFixed(0) + " hPa");
   $("#run_model_step").click(function () { flight_step(); });
   init_solar_model();
   init_thrust_model();
   calc_solar_power(cur_state);
+  cur_state.drive_power = calc_power_from_velocity(cur_state.thrust);
   update_table();
   $("#model_init").hide();
   $("#model_run").show();
@@ -346,9 +347,7 @@ function check_for_resumed_flight() {
         Async: 1 },
       { Status: "Retrieving resumed trajectory ...",
         Function: get_resumed_trajectory,
-        Async: 1 },
-      { Status: "Retrieving resumedtra
-
+        Async: 1 }
     ]);
   } else {
     sequence_exec();
@@ -362,7 +361,7 @@ function get_resumed_flight_data() {
 }
 function rev_flight_data(data) {
   init_cur_flight_list(data);
-  if (cur_flight_list[localStorage.resumeFlightID].username == Username) {
+  if (cur_flight_list[localStorage.resumeFlightID].Username == Username) {
     sequence_exec();
   } else {
     alert('Unable to resume specified FlightID');
@@ -377,11 +376,21 @@ function get_resumed_trajectory() {
 }
 function rev_traj_data(data) {
   load_trajectory(data);
+  // fix up cur_model.model_timestep
+  for (var i = 0; i < models.names.length; ++i) {
+    if (models.names[i] == cur_model.model_name) {
+      cur_model.model_timestep = models.timesteps[i];
+      break;
+    }
+  }
+
   sequence_init([
+    { Status: "Initializing run display ...", Function: init_run_display },
     { Status: "Initializing Range from map", Function: init_scale_from_map },
     { Status: "Drawing map ...", Function: draw_map },
     { Status: "Retrieving wind fields ...", Function: load_model_winds, Async: 1 },
     { Status: "Drawing wind field ...", Function: redraw_wind_field },
+    { Status: "Drawing trajectory ...", Function: draw_trajectory },
     { Status: "Drawing current position ...", Function: draw_current_position },
     { Status: "Drawing thrust plot ...", Function: draw_thrust_plot },
     { Status: "Enable Step", Function: run_enable }

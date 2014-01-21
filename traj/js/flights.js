@@ -85,7 +85,7 @@ function load_trajectory(data) {
     trajectory: [],
     armtimes: [], winds: [],
     model_name: frec.Model,
-    pressure: frec.Level,
+    pressure: parseInt(frec.Level),
     FlightID: FlightID,
     battery_capacity: default_battery_capacity,
     model_timestep: 0
@@ -102,4 +102,5 @@ function load_trajectory(data) {
   var stepsize = $("#run_step").val()/24;
   cur_state = new SC_State(lrec.latitude, lrec.longitude, lrec.armtime,
       stepsize, lrec.thrust, lrec.orientation);
+  cur_state.battery_energy = lrec.battery_energy;
 }
